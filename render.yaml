@@ -1,0 +1,12 @@
+# Render 배포를 위한 설정 파일
+# 이 파일이 있으면 Render가 자동으로 설정을 인식합니다
+
+services:
+  - type: web
+    name: aviation-weather-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && playwright install chromium && playwright install-deps
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
