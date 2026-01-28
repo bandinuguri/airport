@@ -1,0 +1,5 @@
+{
+  "name": "항공기상정보조회",
+  "description": "Real-time aviation weather information tracker specifically sourced from the Aviation Meteorological Office (AMO) for major Korean airports, featuring current conditions and 12-hour forecasts.",
+  "requestFramePermissions": []
+}
