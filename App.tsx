@@ -1,11 +1,10 @@
 import './styles/amo.css';
-import { Plane, RefreshCcw, Info, Loader2 } from 'lucide-react';
+import { Plane, RefreshCw, Info, Loader2, Check } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import WeatherTable from './components/WeatherTable';
-import { fetchWeatherFromApi } from './services/apiService';
+import { fetchWeatherFromApi, saveWeatherSnapshot } from './services/apiService';
 import { AirportWeather } from './types';
 
-const REFRESH_INTERVAL = 10 * 60 * 1000;
 const CACHE_KEY = 'aviation_weather_cache_v2';
 
 interface CacheData {
@@ -19,6 +18,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
+  const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
   const formatUpdateTimestamp = (date: Date = new Date()) => {
     const yy = date.getFullYear().toString().slice(-2);
@@ -33,11 +33,15 @@ const App: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      setRefreshSuccess(false);
 
-      const weatherData = await fetchWeatherFromApi();
+      const result = await fetchWeatherFromApi({ force });
+      const weatherData = result.data;
 
       if (weatherData && weatherData.length > 0) {
-        const updateStr = formatUpdateTimestamp();
+        const updateStr = result.lastUpdated
+          ? formatUpdateTimestamp(new Date(result.lastUpdated))
+          : formatUpdateTimestamp();
         setData(weatherData);
         setLastUpdatedStr(updateStr);
 
@@ -47,6 +51,23 @@ const App: React.FC = () => {
           lastUpdated: updateStr
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
+
+        // Auto-save to history only when server actually refreshed (not cached)
+        if (force && result.cached === false) {
+          try {
+            await saveWeatherSnapshot(weatherData);
+            console.log('Weather snapshot saved to history');
+          } catch (err) {
+            console.warn('Failed to save snapshot:', err);
+          }
+        }
+
+        // Show success feedback
+        setRefreshSuccess(true);
+        setTimeout(() => setRefreshSuccess(false), 2000);
+
+        // If server returned a warning (e.g., refresh throttled), surface it as a soft error banner
+        if (result.warning) setError(result.warning);
       } else {
         throw new Error("데이터를 수집하지 못했습니다.");
       }
@@ -74,16 +95,12 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved) as CacheData;
         setData(parsed.data);
         setLastUpdatedStr(parsed.lastUpdated);
-
-        if (Date.now() - parsed.timestamp > REFRESH_INTERVAL) {
-          runCollectionModule(true);
-        }
       } catch (e) {
-        runCollectionModule(true);
+        // ignore parse error
       }
-    } else {
-      runCollectionModule(true);
     }
+    // Always ask server for the shared latest value on load
+    runCollectionModule(false);
   }, []);
 
   return (
@@ -91,7 +108,9 @@ const App: React.FC = () => {
       <header>
         <div className="header-title-group">
           <div className="header-icon">
-            <Plane size={24} fill="currentColor" />
+            <a onClick={() => (window as any).navigateTo('/history')} style={{ cursor: 'pointer' }} title="히스토리 조회">
+              <Plane size={24} fill="currentColor" />
+            </a>
           </div>
           <div className="header-info">
             <h1>전국 공항 실시간 기상</h1>
@@ -103,11 +122,17 @@ const App: React.FC = () => {
           onClick={() => runCollectionModule(true)}
           disabled={loading}
           title="새로고침"
+          style={{
+            backgroundColor: refreshSuccess ? '#10b981' : undefined,
+            transition: 'background-color 0.3s'
+          }}
         >
           {loading ? (
-            <Loader2 className="animate-spin" size={20} />
+            <RefreshCw size={18} className="spin" />
+          ) : refreshSuccess ? (
+            <Check size={18} />
           ) : (
-            <RefreshCcw size={20} />
+            <RefreshCw size={18} />
           )}
         </button>
       </header>

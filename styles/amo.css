@@ -196,7 +196,7 @@ tbody tr:hover {
 .forecast-toggle {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--primary);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -216,6 +216,7 @@ tbody tr:hover {
 .forecast-toggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  color: #94a3b8;
 }
 
 .video-link {
@@ -301,16 +302,18 @@ tbody tr:hover {
   border-color: var(--primary);
 }
 
-@keyframes fadeIn {
+@keyframes spin {
   from {
-    opacity: 0;
-    transform: translateY(10px);
+    transform: rotate(0deg);
   }
 
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }
 
 .animate-fade {

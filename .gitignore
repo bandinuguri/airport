@@ -35,6 +35,10 @@ env/
 *.swp
 *.swo
 *~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # OS
 .DS_Store
@@ -44,14 +48,22 @@ Thumbs.db
 node_modules/
 
 # Build outputs
-항공기상정보조회/dist/
+dist/
+dist-ssr/
 
 # Environment variables
 .env
 .env.local
+.env.*.local
 
 # Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 *.log
+logs/
 
 # Test outputs
 test_output.json
@@ -60,3 +72,6 @@ page_dump.txt
 
 # Playwright
 .playwright/
+
+# Vite
+*.local

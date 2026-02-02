@@ -1,6 +1,11 @@
 {
-    "buildCommand": "cd 항공기상정보조회 && npm install && npm run build",
-    "outputDirectory": "항공기상정보조회/dist",
-    "installCommand": "cd 항공기상정보조회 && npm install",
-    "framework": "vite"
+    "buildCommand": "npm install && npm run build",
+    "outputDirectory": "dist",
+    "installCommand": "npm install",
+    "framework": "vite",
+    "functions": {
+        "api/**/*.py": {
+            "runtime": "python3.12"
+        }
+    }
 }

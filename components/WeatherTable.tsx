@@ -25,7 +25,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
   };
 
   const handleAirportClick = async (icao: string, name: string) => {
-    // Legacy modal handler, keeping just in case or if we want to revive modal
     setSelectedAirport({ icao, name });
     setLoadingForecast(true);
     setForecast([]);
@@ -40,12 +39,10 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
     }
   };
 
-  // Fetch 3-day forecast data when mode switches to 3day
   const handleForecastModeToggle = async () => {
     const newMode = forecastMode === '12h' ? '3day' : '12h';
     setForecastMode(newMode);
 
-    // If switching to 3day and we don't have data yet, fetch it
     if (newMode === '3day' && Object.keys(forecast3Day).length === 0) {
       setLoading3Day(true);
       try {
@@ -78,7 +75,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
     }
   };
 
-  // Helper to map Korean condition text to icon code for 3-day forecast
   const mapConditionToIcon = (condition: string): string => {
     if (!condition) return 'cloudy';
     if (condition.includes('맑음')) return 'sunny';
@@ -156,25 +152,38 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                         {loading3Day ? (
                           <Loader2 className="animate-spin" size={16} style={{ margin: '0 auto' }} />
                         ) : forecast3Day[item.icao] && forecast3Day[item.icao].length > 0 ? (
-                          forecast3Day[item.icao].slice(0, 3).map((day, idx) => (
-                            <div key={idx} className="forecast-item">
-                              <span className="forecast-time">D{idx + 1}</span>
-                              <span style={{ fontSize: '1.1rem' }}>
-                                {day.forecasts && day.forecasts.length > 0
-                                  ? getWeatherIcon(mapConditionToIcon(day.forecasts[0].condition))
-                                  : '☁️'
-                                }
-                              </span>
-                            </div>
-                          ))
+                          forecast3Day[item.icao].slice(0, 3).map((day, idx) => {
+                            const dowMatch = day.date.match(/\((.*?)\)/);
+                            const dow = dowMatch ? dowMatch[1] : '';
+                            return (
+                              <div key={idx} className="forecast-item">
+                                <span className="forecast-time" style={{ fontSize: '0.85rem', fontWeight: 400 }}>{dow}</span>
+                                <span style={{ fontSize: '1.1rem' }}>
+                                  {day.forecasts && day.forecasts.length > 0
+                                    ? getWeatherIcon(mapConditionToIcon(day.forecasts[0].condition))
+                                    : '☁️'
+                                  }
+                                </span>
+                              </div>
+                            );
+                          })
                         ) : (
                           <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>-</span>
                         )}
                       </div>
                     )}
                   </td>
-                  <td style={{ textAlign: 'center', fontSize: '0.9rem', color: item.advisories !== '없음' ? '#ef4444' : '#64748b', fontWeight: item.advisories !== '없음' ? '600' : '400' }}>
-                    {item.advisories || '없음'}
+                  <td style={{ textAlign: 'center', fontSize: '0.9rem' }}>
+                    {item.advisories && item.advisories !== '없음' ? (
+                      <div style={{
+                        color: item.advisories.includes('대설') ? '#ef4444' : '#64748b',
+                        fontSize: '0.8rem'
+                      }}>
+                        {item.advisories}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#e2e8f0' }}>-</span>
+                    )}
                   </td>
                   <td style={{ textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
                     {item.snowfall || '-'}
@@ -206,10 +215,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
         </table>
       </div>
 
-      {/* Forecast Modal - Kept in DOM but not triggered by row click anymore as per request? 
-          Actually user wanted row click to go to link. So modal is effectively disabled 
-          unless we add a specific button for details. I'll leave code but it's unreachable via row click now. 
-      */}
       {selectedAirport && (
         <div className="modal-overlay" onClick={() => setSelectedAirport(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

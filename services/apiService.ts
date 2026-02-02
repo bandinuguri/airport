@@ -1,17 +1,56 @@
 
 import { AirportWeather, ForecastItem } from "../types";
 
-const BASE_URL = ""; // Vite proxy will handle this
+// 개발 환경: Vite 프록시 사용 (빈 문자열)
+// 프로덕션: Vercel에 통합 배포 시 같은 도메인 사용 (빈 문자열)
+// 외부 백엔드 사용 시: 환경 변수에서 URL 가져오기
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export const fetchWeatherFromApi = async (): Promise<AirportWeather[]> => {
+type WeatherRawResponse =
+    | any[]
+    | { data: any[]; error?: string | null; cached?: boolean; last_updated?: string | null };
+
+async function parseWeatherResponse(weatherRes: Response): Promise<{ raw: any[]; cached?: boolean; lastUpdated?: string | null; warning?: string | null }> {
+    const raw = await weatherRes.json();
+    // 새 형식: { data: [...], error: string | null }
+    if (raw && typeof raw === 'object' && 'data' in raw) {
+        // error가 있어도 data가 있으면 data는 살리고 warning으로 넘김
+        const dataArr = Array.isArray(raw.data) ? raw.data : [];
+        return {
+            raw: dataArr,
+            cached: !!raw.cached,
+            lastUpdated: raw.last_updated ?? null,
+            warning: raw.error ?? null,
+        };
+    }
+    // 이전 형식: 배열 직접 반환
+    return { raw: Array.isArray(raw) ? raw : [] };
+}
+
+export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{ data: AirportWeather[]; cached?: boolean; lastUpdated?: string | null; warning?: string | null }> => {
     try {
+        const force = !!opts?.force;
+        const weatherUrl = `${BASE_URL}/api/weather${force ? '?force=true' : ''}`;
         const [weatherRes, reportRes] = await Promise.all([
-            fetch(`${BASE_URL}/api/weather`),
+            fetch(weatherUrl),
             fetch(`${BASE_URL}/api/special-reports`)
         ]);
 
-        if (!weatherRes.ok) throw new Error("Failed to fetch weather data");
-        const weatherData = await weatherRes.json();
+        if (!weatherRes.ok) {
+            let msg = "기상 데이터를 가져오지 못했습니다.";
+            try {
+                const errBody = await weatherRes.json().catch(() => ({}));
+                const detail = errBody?.detail ?? errBody?.error ?? errBody?.message;
+                if (detail) msg = typeof detail === 'string' ? detail : JSON.stringify(detail);
+            } catch {
+                if (weatherRes.status === 502 || weatherRes.status === 504)
+                    msg = "백엔드 서버에 연결할 수 없습니다. 터미널에서 'npm run dev'로 실행했는지 확인하세요.";
+            }
+            throw new Error(msg);
+        }
+
+        const parsed = await parseWeatherResponse(weatherRes);
+        const weatherData = parsed.raw;
 
         let specialReports: any[] = [];
         try {
@@ -59,16 +98,55 @@ export const fetchWeatherFromApi = async (): Promise<AirportWeather[]> => {
         });
 
         // Sort data
-        return mappedData.sort((a: AirportWeather, b: AirportWeather) => {
+        const sorted = mappedData.sort((a: AirportWeather, b: AirportWeather) => {
             const indexA = SORT_ORDER.indexOf(a.icao);
             const indexB = SORT_ORDER.indexOf(b.icao);
             return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
         });
-    } catch (error) {
+        return { data: sorted, cached: parsed.cached, lastUpdated: parsed.lastUpdated, warning: parsed.warning };
+    } catch (error: any) {
         console.error("API Fetch Error:", error);
+        const msg = error?.message ?? String(error);
+        if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Load failed"))
+            throw new Error("백엔드 서버에 연결할 수 없습니다. 터미널에서 'npm run dev'로 실행했는지 확인하세요.");
         throw error;
     }
 };
+
+export async function fetchSpecialReportsFromApi() {
+    const response = await fetch(`${BASE_URL}/api/special-reports`);
+    if (!response.ok) throw new Error('Failed to fetch special reports');
+    return response.json();
+}
+
+// History API functions
+export async function saveWeatherSnapshot(weatherData: any[]) {
+    const response = await fetch(`${BASE_URL}/api/history/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(weatherData)
+    });
+    if (!response.ok) throw new Error('Failed to save snapshot');
+    return response.json();
+}
+
+export async function fetchSnapshots() {
+    const response = await fetch(`${BASE_URL}/api/history/snapshots`);
+    if (!response.ok) throw new Error('Failed to fetch snapshots');
+    return response.json();
+}
+
+export async function fetchSnapshotData(snapshotId: number) {
+    const response = await fetch(`${BASE_URL}/api/history/snapshot/${snapshotId}`);
+    if (!response.ok) throw new Error('Failed to fetch snapshot data');
+    return response.json();
+}
+
+export async function fetchAirportHistory(airportCode: string) {
+    const response = await fetch(`${BASE_URL}/api/history/airport/${airportCode}`);
+    if (!response.ok) throw new Error('Failed to fetch airport history');
+    return response.json();
+}
 
 export const fetchForecastFromApi = async (icao: string) => {
     try {

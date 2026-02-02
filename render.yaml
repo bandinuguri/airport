@@ -10,3 +10,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+      # 프론트엔드 URL이 있다면 CORS용으로 추가
+      # - key: FRONTEND_URL
+      #   value: https://your-frontend.vercel.app

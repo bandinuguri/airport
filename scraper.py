@@ -1,18 +1,20 @@
 import asyncio
 import json
+import sys
 from playwright.async_api import async_playwright
+
+
 
 async def scrape_airport_weather():
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        # Create a context to be shared
-        context = await browser.new_context()
-        page = await context.new_page()
-        
-        url = "https://amo.kma.go.kr/"
-        print(f"URL 접속 중: {url}")
-        
         try:
+            browser = await p.chromium.launch(headless=True)
+            # Create a context to be shared
+            context = await browser.new_context()
+            page = await context.new_page()
+            
+            url = "https://amo.kma.go.kr/"
+            print(f"URL 접속 중: {url}")
             await page.goto(url, timeout=60000)
             await page.wait_for_selector("li.ca-item", timeout=30000)
             
@@ -198,7 +200,8 @@ async def scrape_airport_weather():
             print(f"오류 발생: {e}")
             return []
         finally:
-            await browser.close()
+            if 'browser' in locals():
+                await browser.close()
 
 async def scrape_special_reports():
     async with async_playwright() as p:
@@ -214,42 +217,24 @@ async def scrape_special_reports():
             
             # 특보 텍스트 추출
             raw_lines = await page.evaluate('''() => {
-                const lines = [];
-                const paragraphs = document.querySelectorAll('.cmp-weather-cmt-txt-box .paragraph p.tit');
-                paragraphs.forEach(p => {
-                    const text = p.innerText.trim();
-                    if (text) lines.push(text);
+                const results = [];
+                const paragraphs = document.querySelectorAll('.cmp-weather-cmt-txt-box .paragraph');
+                paragraphs.forEach(el => {
+                    // Replace <br> tags with newlines to ensure we catch all lines
+                    const html = el.innerHTML.replace(/<br\s*\/?>/gi, '\\n');
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    const text = temp.innerText;
+                    text.split('\\n').forEach(line => {
+                        const trimmed = line.trim();
+                        // Only capture lines that look like our advisory format
+                        if (trimmed.startsWith('o')) {
+                            results.push(trimmed);
+                        }
+                    });
                 });
-                return lines;
+                return results;
             }''')
-            
-            # 파싱 및 공항 매핑 로직
-            # 매핑 정의 (공항명: (상위지역, 하위지역))
-            # 상위지역: 특보 텍스트에서 찾을 큰 지역명 (예: 서울)
-            # 하위지역: 괄호 안에 있을 경우 확인할 세부 지역명 (예: 서울서남권) (없으면 상위지역 전체 적용 가정)
-            # 주의: "인천"의 경우 "인천"이 상위, "인천"이 하위로 설정됨.
-            mapping = {
-                "인천": ("인천", "인천"),
-                "김포": ("서울", "서울서남권"),
-                "청주": ("충청북도", "청주"),
-                "대구": ("대구", "대구"),
-                "광주": ("광주", "광주"),
-                "무안": ("전라남도", "무안"),
-                "김해": ("부산", "부산 서부"), # 부산 서부 -> 부산(부산 서부) 또는 그냥 부산
-                "제주": ("제주", "제주도북부"),
-                "원주": ("강원도", "횡성"),
-                "군산": ("전라북도", "군산"), # 전북자치도 -> 전라북도/전북 매핑 필요. 코드상 전라북도로 검색 시도.
-                "울산": ("울산", "울산동부"),
-                "포항": ("경상북도", "포항"),
-                "여수": ("전라남도", "여수"),
-                "사천": ("경상남도", "사천"),
-                "양양": ("강원도", "양양평지")
-            }
-            
-            # "전북자치도" -> "전라북도" normalization might be needed if text uses standard naming
-            # Text uses "전라북도" (historically) or "전북자치도"?
-            # User said "전북자치도". Let's assume standard "전라북도" in scraper for safety, or check both.
-            # Updated mapping to use lists for Upper Region to support aliases
             
             mapping_aliases = {
                 "인천": (["인천"], "인천"),
@@ -259,7 +244,7 @@ async def scrape_special_reports():
                 "광주": (["광주", "광주광역시"], "광주"),
                 "무안": (["전라남도", "전남"], "무안"),
                 "김해": (["부산", "부산광역시"], "부산 서부"), 
-                "제주": (["제주", "제주도"], "제주도북부"), # 제주도 북부? 제주시는 제주도북부 포함
+                "제주": (["제주", "제주도"], "제주도북부"),
                 "원주": (["강원도", "강원"], "횡성"),
                 "군산": (["전라북도", "전북", "전북자치도", "전북특별자치도"], "군산"),
                 "울산": (["울산", "울산광역시"], "울산동부"),
@@ -272,28 +257,32 @@ async def scrape_special_reports():
             results = {k: [] for k in mapping_aliases.keys()}
             
             for line in raw_lines:
-                # Filter strict format: "o [Type] : [Content]"
-                if not line.strip().startswith("o"): continue
+                line = line.strip()
+                # Secondary check for format "o [Type] : [Content]"
+                if ":" not in line: continue
                 
-                parts = line.split(":")
-                if len(parts) < 2: continue
+                parts = line.split(":", 1)
+                raw_type = parts[0].replace("o", "").strip() 
                 
-                raw_type = parts[0].replace("o", "").strip() # "한파주의보"
-                content = parts[1].strip() # "경기도(...), ..."
+                # Filter out junk (like "01/30" or other non-advisory text)
+                if not raw_type or raw_type[0].isdigit() or "발표" in raw_type:
+                    continue
+                    
+                content = parts[1].strip() 
                 
-                # Formatting Logic
+                # Formatting Logic based on user rules
                 formatted_type = raw_type
                 if "대설" in raw_type:
-                    if "예비" in raw_type:
-                        formatted_type = "대설예비"
+                    if "예보" in raw_type or "예비" in raw_type:
+                        formatted_type = "대설예"
                     elif "주의보" in raw_type:
-                        formatted_type = "대설주의"
+                        formatted_type = "대설주"
                     elif "경보" in raw_type:
-                        formatted_type = "대설경보"
+                        formatted_type = "대설경"
                     else:
-                        formatted_type = raw_type # Fallback
+                        formatted_type = raw_type[:3]
                 else:
-                    # Others: 2 chars (e.g., 강풍, 한파, 건조)
+                    # Non-heavy snow: 2 characters (e.g., 건조, 한파, 강풍)
                     formatted_type = raw_type[:2]
                 
                 # Check for each airport
@@ -303,6 +292,7 @@ async def scrape_special_reports():
                     for upper in uppers:
                         if upper in content:
                             import re
+                            # Pattern to find 'UpperRegion(LowerRegion)'
                             pattern = re.escape(upper) + r"(?:\(([^)]+)\))?"
                             matches = re.finditer(pattern, content)
                             
@@ -310,15 +300,23 @@ async def scrape_special_reports():
                                 sub_content = m.group(1)
                                 
                                 if sub_content is None:
+                                    # Matches Upper Region entirely
                                     matched = True
                                     break
                                 else:
                                     norm_sub = sub_content.replace(" ", "")
                                     norm_lower = lower.replace(" ", "")
                                     
-                                    if norm_lower in norm_sub:
-                                        matched = True
-                                        break
+                                    if "제외" in norm_sub:
+                                        # If "exclude" (제외) is present, match if lower region is NOT in sub_content
+                                        if norm_lower not in norm_sub:
+                                            matched = True
+                                            break
+                                    else:
+                                        # Standard include
+                                        if norm_lower in norm_sub:
+                                            matched = True
+                                            break
                             if matched:
                                 break
                     
