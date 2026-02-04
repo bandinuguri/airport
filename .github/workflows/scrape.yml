@@ -1,0 +1,32 @@
+# GitHub Actions: 주기적으로 기상 데이터 스크래핑 후 Supabase에 저장
+# Secrets에 DATABASE_URL (Supabase Postgres 연결 문자열) 설정 필요
+
+name: Scrape weather to Supabase
+
+on:
+  schedule:
+    # 매시 0분, 30분 (하루 48회). 무료 한도 고려해 1시간마다로 변경 가능: '0 * * * *'
+    - cron: '0,30 * * * *'
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps
+
+      - name: Run scraper and save to Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scripts/run_scraper_to_db.py

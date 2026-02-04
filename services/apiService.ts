@@ -6,21 +6,23 @@ import { AirportWeather, ForecastItem } from "../types";
 // 외부 백엔드 사용 시: 환경 변수에서 URL 가져오기
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-type WeatherRawResponse =
-    | any[]
-    | { data: any[]; error?: string | null; cached?: boolean; last_updated?: string | null };
-
-async function parseWeatherResponse(weatherRes: Response): Promise<{ raw: any[]; cached?: boolean; lastUpdated?: string | null; warning?: string | null }> {
+async function parseWeatherResponse(weatherRes: Response): Promise<{
+    raw: any[];
+    cached?: boolean;
+    lastUpdated?: string | null;
+    warning?: string | null;
+    specialReports?: any[];
+}> {
     const raw = await weatherRes.json();
-    // 새 형식: { data: [...], error: string | null }
+    // Vercel/Supabase 형식: { data, special_reports?, error?, cached?, last_updated? }
     if (raw && typeof raw === 'object' && 'data' in raw) {
-        // error가 있어도 data가 있으면 data는 살리고 warning으로 넘김
         const dataArr = Array.isArray(raw.data) ? raw.data : [];
         return {
             raw: dataArr,
             cached: !!raw.cached,
             lastUpdated: raw.last_updated ?? null,
             warning: raw.error ?? null,
+            specialReports: Array.isArray(raw.special_reports) ? raw.special_reports : undefined,
         };
     }
     // 이전 형식: 배열 직접 반환
@@ -31,10 +33,9 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
     try {
         const force = !!opts?.force;
         const weatherUrl = `${BASE_URL}/api/weather${force ? '?force=true' : ''}`;
-        const [weatherRes, reportRes] = await Promise.all([
-            fetch(weatherUrl),
-            fetch(`${BASE_URL}/api/special-reports`)
-        ]);
+        const weatherRes = await fetch(weatherUrl);
+        // Vercel API는 weather 한 번에 data + special_reports 반환 → 별도 호출 생략
+        const reportRes = await fetch(`${BASE_URL}/api/special-reports`);
 
         if (!weatherRes.ok) {
             let msg = "기상 데이터를 가져오지 못했습니다.";
@@ -52,13 +53,13 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
         const parsed = await parseWeatherResponse(weatherRes);
         const weatherData = parsed.raw;
 
-        let specialReports: any[] = [];
-        try {
-            if (reportRes.ok) {
-                specialReports = await reportRes.json();
+        let specialReports: any[] = parsed.specialReports ?? [];
+        if (specialReports.length === 0) {
+            try {
+                if (reportRes.ok) specialReports = await reportRes.json();
+            } catch (e) {
+                console.warn("Retrieving special reports failed", e);
             }
-        } catch (e) {
-            console.warn("Retriving special reports failed", e);
         }
 
         // Defined Sort Order

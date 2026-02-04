@@ -1,224 +1,137 @@
-# 🚀 Vercel 통합 배포 가이드
+# 🚀 Vercel 배포 가이드 (Node API + Supabase + GitHub Actions)
 
-이 가이드는 **프론트엔드와 백엔드를 Vercel 하나에 통합 배포**하는 방법을 설명합니다.
-
----
-
-## ⚠️ 중요: Playwright 제한사항
-
-**Vercel Serverless Functions의 제약:**
-- ⏱️ **실행 시간 제한**: 무료 플랜 10초, Pro 플랜 60초
-- 💾 **메모리 제한**: 최대 1GB
-- 🌐 **Playwright 실행**: 브라우저 실행에 시간이 오래 걸려 제한적일 수 있음
-
-**권장 사항:**
-- ✅ **소규모 사용**: 무료 플랜으로 시작해보고, 문제가 있으면 Pro 플랜 고려
-- ✅ **캐싱 활용**: 프론트엔드에서 캐싱을 적극 활용하여 API 호출 최소화
-- ⚠️ **대안**: Playwright가 계속 실패하면 Render나 Railway 같은 별도 백엔드 서비스 사용 고려
+이 프로젝트는 **Vercel(프론트+Node API)** + **Supabase(DB)** + **GitHub Actions(스크래퍼)** 로 구성됩니다.  
+Playwright는 Vercel에서 실행하지 않고, GitHub Actions에서 주기적으로 스크래핑 후 Supabase에 저장합니다.
 
 ---
 
 ## 📋 배포 전 체크리스트
 
-- [x] 프로젝트가 로컬에서 정상 작동하는지 확인
-- [x] GitHub 저장소에 코드 업로드 완료
-- [ ] Vercel 계정 준비
+1. [ ] Supabase 프로젝트 생성 및 `supabase/schema.sql` 실행
+2. [ ] GitHub Secrets에 `DATABASE_URL` 설정 (스크래퍼용)
+3. [ ] Vercel 환경 변수에 Supabase 설정
+4. [ ] GitHub에 코드 푸시 후 Vercel 자동 배포
 
 ---
 
-## 1단계: GitHub에 코드 업로드
+## 1. Supabase 설정
 
-```powershell
-cd C:\Users\MOLIT\Desktop\0122
-git init
-git add .
-git commit -m "Initial commit: Integrated deployment"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/aviation-weather-dashboard.git
-git push -u origin main
-```
+1. https://supabase.com 에서 프로젝트 생성
+2. **SQL Editor**에서 `supabase/schema.sql` 내용 붙여넣기 후 실행
+3. **Settings → API**에서 확인:
+   - `Project URL` → Vercel 환경 변수 `SUPABASE_URL`
+   - `anon` key → `SUPABASE_ANON_KEY`
+   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (히스토리 저장 등에 권장)
+
+**스크래퍼용 DB 연결 문자열 (GitHub Secrets용):**  
+**Settings → Database → Connection string**에서 **URI** 복사 후,  
+`postgres://` 를 `postgresql://` 로 바꾼 값을 `DATABASE_URL`로 사용.
 
 ---
 
-## 2단계: Vercel 배포
+## 2. GitHub 설정
 
-### 2-1. Vercel 계정 생성
+1. 저장소 **Settings → Secrets and variables → Actions**
+2. **New repository secret** 추가:
+   - Name: `DATABASE_URL`
+   - Value: Supabase Connection string (위에서 복사한 `postgresql://...`)
 
-1. https://vercel.com 접속
-2. `Sign Up` → GitHub 계정으로 로그인
+푸시 후 **Actions** 탭에서 `scrape.yml` 워크플로가 주기적으로 실행되며 Supabase에 데이터를 채웁니다.
 
-### 2-2. 프로젝트 Import
+---
 
-1. Dashboard → `Add New` → `Project` 클릭
-2. GitHub 저장소 선택: `YOUR_USERNAME/aviation-weather-dashboard`
-3. `Import` 클릭
+## 3. Vercel 배포
 
-### 2-3. 프로젝트 설정
+### 3-1. 프로젝트 Import
 
-**기본 설정 (자동 감지됨):**
-- **Framework Preset**: `Vite` ✅
-- **Root Directory**: `.` (프로젝트 루트)
-- **Build Command**: `npm install && npm run build`
+1. https://vercel.com → **Add New** → **Project**
+2. GitHub 저장소 선택 후 **Import**
+
+### 3-2. 환경 변수
+
+**Settings → Environment Variables**에 추가:
+
+| 이름 | 값 | 비고 |
+|------|-----|------|
+| `SUPABASE_URL` | `https://xxxx.supabase.co` | Supabase Project URL |
+| `SUPABASE_ANON_KEY` | (anon key) | 공개용 |
+| `SUPABASE_SERVICE_ROLE_KEY` | (service_role key) | 히스토리 저장/삭제 권장 |
+
+(선택) `GEMINI_API_KEY` – AI 기능 사용 시
+
+### 3-3. 빌드 설정
+
+- **Framework**: Vite (자동 감지)
+- **Build Command**: `npm run build`
 - **Output Directory**: `dist`
 - **Install Command**: `npm install`
 
-**환경 변수 (선택사항):**
-- `VITE_API_BASE_URL`: 비워두기 (같은 도메인 사용)
-- `GEMINI_API_KEY`: 필요시 설정
+`api/` 폴더의 Node.js 파일은 자동으로 Serverless Functions로 배포됩니다.
 
-**Functions 설정:**
-- Vercel이 자동으로 `api/` 폴더의 Python 파일을 인식합니다
-- Python 런타임은 자동으로 설정됩니다
+### 3-4. Deploy
 
-### 2-4. 배포
-
-1. `Deploy` 클릭
-2. 배포 완료까지 3-5분 대기
-3. **배포 URL 확인** (예: `https://aviation-weather-dashboard.vercel.app`)
+**Deploy** 클릭 후 완료되면 배포 URL에서 앱 확인.
 
 ---
 
-## 3단계: 배포 확인
+## 4. API 엔드포인트 (Vercel)
 
-### 3-1. 프론트엔드 확인
-
-1. 브라우저에서 Vercel URL 접속
-2. 기상 데이터가 정상적으로 로드되는지 확인
-
-### 3-2. API 엔드포인트 확인
-
-브라우저에서 직접 테스트:
-- `https://your-app.vercel.app/api/weather`
-- JSON 응답이 나오는지 확인
-
-### 3-3. 문제 해결
-
-**문제: "기상 데이터를 가져오지 못했습니다"**
-
-1. **Vercel Dashboard → Functions 탭 확인**
-   - `/api/weather` 함수가 있는지 확인
-   - 로그에서 오류 메시지 확인
-
-2. **Playwright 설치 확인**
-   - Vercel Functions는 빌드 시 Playwright를 설치해야 합니다
-   - `vercel.json`의 `installCommand` 확인
-
-3. **실행 시간 초과**
-   - Vercel 무료 플랜은 10초 제한
-   - Pro 플랜($20/월)으로 업그레이드 고려
-   - 또는 Render/Railway 같은 별도 백엔드 사용
-
-**문제: Playwright 실행 실패**
-
-Vercel Functions에서 Playwright 실행이 실패하는 경우:
-
-1. **대안 1: Render 백엔드 사용**
-   - Render에 백엔드만 배포
-   - Vercel에 프론트엔드만 배포
-   - 환경 변수 `VITE_API_BASE_URL` 설정
-
-2. **대안 2: Railway 사용**
-   - Railway는 Playwright 실행에 더 적합
-   - `DEPLOY_GUIDE.md` 참고
+| 경로 | 메서드 | 설명 |
+|------|--------|------|
+| `/api/weather` | GET | 최신 기상 데이터 (Supabase `weather_latest`) |
+| `/api/special-reports` | GET | 최신 특보 |
+| `/api/forecast/[icao]` | GET | 상세 예보 (현재 빈 배열 – 스크래퍼 미수집) |
+| `/api/history/save` | POST | 스냅샷 저장 |
+| `/api/history/snapshots` | GET | 스냅샷 목록 |
+| `/api/history/snapshot/[id]` | GET | 스냅샷 상세 |
+| `/api/history/airport/[code]` | GET | 공항별 히스토리 |
 
 ---
 
-## 📁 프로젝트 구조
+## 5. 프로젝트 구조
 
 ```
-프로젝트 루트/
-├── api/                    # Vercel Serverless Functions
-│   ├── weather.py          # GET /api/weather
-│   ├── special-reports.py  # GET /api/special-reports
-│   └── forecast/
-│       └── [icao_code].py  # GET /api/forecast/:icao_code
-├── dist/                   # 빌드 출력 (자동 생성)
-├── app.py                  # FastAPI 앱 (로컬 개발용)
-├── scraper.py              # 스크래퍼 로직
-├── vercel.json             # Vercel 설정
-└── package.json            # Node.js 의존성
+├── api/                        # Vercel Serverless (Node.js)
+│   ├── weather.js
+│   ├── special-reports.js
+│   ├── forecast/[icao].js
+│   └── history/
+│       ├── save.js
+│       ├── snapshots.js
+│       ├── snapshot/[snapshot_id].js
+│       └── airport/[airport_code].js
+├── supabase/schema.sql         # Supabase 테이블 정의
+├── scripts/run_scraper_to_db.py  # 스크래퍼 → Supabase 저장
+├── .github/workflows/scrape.yml  # 주기 스크래핑 (cron)
+├── vercel.json
+└── package.json
 ```
 
 ---
 
-## 🔄 코드 업데이트 시
-
-코드를 수정한 후:
+## 6. 코드 수정 후 재배포
 
 ```powershell
 git add .
-git commit -m "설명: 무엇을 변경했는지"
+git commit -m "변경 내용"
 git push origin main
 ```
 
-**자동 재배포:**
-- Vercel이 GitHub에 푸시되면 자동으로 재배포합니다
-- 배포 상태는 Vercel Dashboard에서 확인 가능
+Vercel이 자동으로 재배포합니다.
 
 ---
 
-## 💰 비용 정보
+## 7. 문제 해결
 
-### Vercel 무료 플랜
+- **데이터가 비어 있음**  
+  GitHub Actions에서 스크래퍼가 한 번이라도 성공했는지 확인. Supabase **Table Editor**에서 `weather_latest` 행이 있는지 확인.
 
-**제한사항:**
-- ✅ 무료
-- ✅ 무제한 빌드
-- ✅ 자동 HTTPS
-- ⏱️ Functions 실행 시간: **10초 제한**
-- 💾 Functions 메모리: 최대 1GB
-- ⚠️ Playwright 실행이 느릴 수 있음
+- **API 500**  
+  Vercel **Functions → Logs**에서 에러 확인. `SUPABASE_URL`, `SUPABASE_ANON_KEY`(또는 `SUPABASE_SERVICE_ROLE_KEY`) 설정 여부 확인.
 
-### Vercel Pro 플랜 ($20/월)
-
-**장점:**
-- ✅ Functions 실행 시간: **60초 제한**
-- ✅ 더 많은 대역폭
-- ✅ 고급 분석 도구
-- ✅ 더 빠른 빌드
+- **히스토리 저장 실패**  
+  `SUPABASE_SERVICE_ROLE_KEY` 사용 권장 (RLS 우회).
 
 ---
 
-## 🎯 권장 배포 방법 비교
-
-| 방법 | 장점 | 단점 | 추천 |
-|------|------|------|------|
-| **Vercel 통합** | 한 곳에서 관리, 간단 | Playwright 제한적 | ⭐ 소규모 사용 |
-| **Vercel + Render** | 안정적, Playwright 지원 | 두 곳 관리 필요 | ⭐⭐ **추천** |
-| **Railway 전체** | 한 곳 관리, Playwright 지원 | 설정 복잡 | ⭐⭐⭐ 대규모 사용 |
-
----
-
-## ✅ 완료!
-
-이제 **Vercel URL 하나로 전체 서비스를 사용**할 수 있습니다!
-
-**예시:**
-```
-전국 공항 실시간 기상정보 조회
-https://aviation-weather-dashboard.vercel.app
-```
-
----
-
-## 📞 문제 발생 시
-
-1. **Vercel Dashboard → Functions → Logs** 확인
-2. **Vercel Dashboard → Deployments → 해당 배포 → Logs** 확인
-3. **GitHub Issues**: 저장소에 이슈 등록
-
----
-
-## 🔄 대안: Vercel + Render (더 안정적)
-
-Playwright 실행이 계속 실패하는 경우, 백엔드만 Render로 분리하는 것을 권장합니다:
-
-1. Render에 백엔드 배포 (`DEPLOY_GUIDE.md` 참고)
-2. Vercel에 프론트엔드만 배포
-3. 환경 변수 `VITE_API_BASE_URL` 설정
-
-이 방법이 더 안정적이고 Playwright 실행에 문제가 없습니다.
-
----
-
-**행운을 빕니다! 🚀**
+**배포 완료 후 Vercel URL로 접속해 동작을 확인하면 됩니다.**
