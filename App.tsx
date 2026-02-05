@@ -17,25 +17,30 @@ const App: React.FC = () => {
    * 서버에서 온 날짜 문자열을 한국 시간(KST) 포맷으로 변환합니다.
    * 이미지 형식: 2026년 2월 5일(목) 16:00(KST)
    */
-  const formatToKST = (dateInput: any) => {
-    if (!dateInput) return "시간 정보 없음";
-    
-    // 서버 응답 "2026-02-05 08:48" 등을 모든 브라우저 호환 포맷으로 변경
-    const date = new Date(String(dateInput).replace(/-/g, '/'));
-    
-    if (isNaN(date.getTime())) return String(dateInput);
 
-    try {
-      const formatter = new Intl.DateTimeFormat('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Seoul'
-      });
+  const formatToKST = (dateInput: any) => {
+  if (!dateInput) return "시간 정보 없음";
+
+  const date = new Date(dateInput); // ISO 문자열 그대로 파싱
+  if (isNaN(date.getTime())) return String(dateInput);
+
+  const formatter = new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul',
+  });
+
+  const parts = formatter.formatToParts(date);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+
+  // 원하는 형식: 2026-02-05 18:57
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+};
       
       const parts = formatter.formatToParts(date);
       const p: any = {};
