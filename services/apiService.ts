@@ -55,8 +55,11 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
     const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
     
     // 서버 응답에서 가장 신뢰할 수 있는 시간을 추출합니다.
-    const serverTime = rawJson.updated_at || (weatherData.length > 0 ? weatherData[0].time : new Date().toISOString());
-
+    const serverTime =
+      rawJson.last_updated
+      || rawJson.updated_at
+      || (weatherData.length > 0 ? weatherData[0].time : new Date().toISOString());
+    
     const mappedData = weatherData.map((item: any) => {
       // 해당 공항에 대한 특보 매칭
       const foundReport = globalReports.find((r: any) =>
