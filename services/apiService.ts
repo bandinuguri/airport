@@ -1,4 +1,3 @@
-
 import { AirportWeather, ForecastItem } from "../types";
 
 // 개발 환경: Vite 프록시 사용 (빈 문자열)
@@ -33,9 +32,10 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
     try {
         const force = !!opts?.force;
         const weatherUrl = `${BASE_URL}/api/weather${force ? '?force=true' : ''}`;
-        const weatherRes = await fetch(weatherUrl);
-        // Vercel API는 weather 한 번에 data + special_reports 반환 → 별도 호출 생략
-        const reportRes = await fetch(`${BASE_URL}/api/special-reports`);
+        
+        // [수정됨] 캐시를 사용하지 않고 매번 DB에서 새 데이터를 가져오도록 설정
+        const weatherRes = await fetch(weatherUrl, { cache: 'no-store' });
+        const reportRes = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
 
         if (!weatherRes.ok) {
             let msg = "기상 데이터를 가져오지 못했습니다.";
@@ -115,7 +115,8 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
 };
 
 export async function fetchSpecialReportsFromApi() {
-    const response = await fetch(`${BASE_URL}/api/special-reports`);
+    // [수정됨] 캐시 방지 옵션 추가
+    const response = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch special reports');
     return response.json();
 }
@@ -132,26 +133,27 @@ export async function saveWeatherSnapshot(weatherData: any[]) {
 }
 
 export async function fetchSnapshots() {
-    const response = await fetch(`${BASE_URL}/api/history/snapshots`);
+    // [수정됨] 캐시 방지 옵션 추가
+    const response = await fetch(`${BASE_URL}/api/history/snapshots`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch snapshots');
     return response.json();
 }
 
 export async function fetchSnapshotData(snapshotId: number) {
-    const response = await fetch(`${BASE_URL}/api/history/snapshot/${snapshotId}`);
+    const response = await fetch(`${BASE_URL}/api/history/snapshot/${snapshotId}`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch snapshot data');
     return response.json();
 }
 
 export async function fetchAirportHistory(airportCode: string) {
-    const response = await fetch(`${BASE_URL}/api/history/airport/${airportCode}`);
+    const response = await fetch(`${BASE_URL}/api/history/airport/${airportCode}`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch airport history');
     return response.json();
 }
 
 export const fetchForecastFromApi = async (icao: string) => {
     try {
-        const response = await fetch(`${BASE_URL}/api/forecast/${icao}`);
+        const response = await fetch(`${BASE_URL}/api/forecast/${icao}`, { cache: 'no-store' });
         if (!response.ok) throw new Error("Failed to fetch forecast data");
         return await response.json();
     } catch (error) {
