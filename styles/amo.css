@@ -192,6 +192,28 @@ tbody tr:hover {
   color: #94a3b8;
 }
 
+/* Advisory badge (특보) */
+.advisory-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.advisory-snow {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.advisory-plain {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
 /* Forecast Toggle Button */
 .forecast-toggle {
   background: transparent;
@@ -378,6 +400,28 @@ tbody tr:hover {
     font-size: 0.85rem;
   }
 
+  /* 전체적으로 열 간격을 줄여서 공항–현재–특보가 더 촘촘하게 보이도록 */
+  th:nth-child(2),
+  td:nth-child(2),
+  th:nth-child(3),
+  td:nth-child(3),
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  /* 특보 컬럼은 조금 더 타이트하게 */
+  th:nth-child(4),
+  td:nth-child(4) {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
   /* Reduce left padding on first column (airport names) */
   td:first-child,
   th:first-child {
@@ -487,6 +531,20 @@ tbody tr:hover {
   td {
     padding: 10px 4px;
     font-size: 0.8rem;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2),
+  th:nth-child(3),
+  td:nth-child(3),
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 3px;
+    padding-right: 3px;
   }
 
   .airport-name {
