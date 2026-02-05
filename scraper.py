@@ -400,7 +400,9 @@ async def scrape_airport_forecast(icao_code):
 if __name__ == "__main__":
     import os
     import psycopg2
-    from psycopg2.extras import execute_values
+    import json
+    import asyncio
+    from urllib.parse import urlparse  # 주소 해석을 위해 추가
 
     async def run():
         # 1. 데이터 수집
@@ -411,19 +413,28 @@ if __name__ == "__main__":
 
         print(f"수집 완료: {len(data)}개 공항")
 
-        # 2. Supabase(Postgres) 연결 및 저장
+        # 2. Supabase(Postgres) 연결 설정
         db_url = os.environ.get("DATABASE_URL")
         if not db_url:
             print("에러: DATABASE_URL 환경변수가 설정되지 않았습니다.")
-            # 로컬 테스트용으로 출력만 하고 종료
-            print(json.dumps(data, ensure_ascii=False, indent=2))
             return
 
         try:
-            conn = psycopg2.connect(db_url)
+            # URL을 개별 구성 요소로 분해
+            result = urlparse(db_url)
+            
+            # 분해된 정보를 이용해 명시적으로 연결
+            conn = psycopg2.connect(
+                database=result.path[1:],  # 'postgres'
+                user=result.username,      # 'postgres.zwvrqaljanamjzvurgjx'
+                password=result.password,  # 'skTltkdlxm' (직접 입력하지 말고 변수 유지)
+                host=result.hostname,      # 'aws-0-ap-northeast-2.pooler.supabase.com'
+                port=result.port           # 6543
+            )
+            
             cur = conn.cursor()
 
-            # 테이블이 없으면 생성 (id=1 인 행 하나에 모든 데이터를 JSON으로 저장하는 구조)
+            # 테이블 생성 및 데이터 저장 로직 (기존과 동일)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS weather_latest (
                     id INTEGER PRIMARY KEY,
@@ -432,7 +443,6 @@ if __name__ == "__main__":
                 )
             """)
 
-            # 데이터 저장 (JSON으로 변환하여 업데이트)
             json_data = json.dumps(data, ensure_ascii=False)
             cur.execute("""
                 INSERT INTO weather_latest (id, data, updated_at)
@@ -443,12 +453,12 @@ if __name__ == "__main__":
             """, (json_data,))
 
             conn.commit()
-            print("Supabase에 성공적으로 저장되었습니다!")
+            print("✅ Supabase에 성공적으로 저장되었습니다!")
 
         except Exception as e:
-            print(f"DB 저장 중 오류 발생: {e}")
+            print(f"❌ DB 저장 중 오류 발생: {e}")
         finally:
-            if 'conn' in locals():
+            if 'conn' in locals() and conn:
                 conn.close()
 
     asyncio.run(run())
