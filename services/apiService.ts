@@ -1,26 +1,6 @@
-// services/apiService.ts
-
-// 빌드 에러 방지를 위해 내부 인터페이스 정의
-export interface ForecastItem {
-  time: string;
-  iconCode: string;
-}
-
-export interface AirportWeather {
-  airportName: string;
-  icao: string;
-  current: {
-    condition: string;
-    temperature: string;
-    iconCode: string;
-  };
-  forecast12h: ForecastItem[];
-  advisories: string;
-  snowfall: string;
-}
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
-
+/**
+ * 기상 상태 텍스트를 기반으로 아이콘 코드를 매핑합니다.
+ */
 const mapConditionToIconCode = (condition: string): string => {
   const text = condition || "";
   if (text.includes('맑음')) return 'sunny';
@@ -31,7 +11,11 @@ const mapConditionToIconCode = (condition: string): string => {
   return 'sunny';
 };
 
-const mapForecast12h = (forecastStr: string): ForecastItem[] => {
+/**
+ * 12시간 예보 문자열을 파싱하여 객체 배열로 반환합니다.
+ * (예: "맑음 > 흐림 > 비")
+ */
+const mapForecast12h = (forecastStr: string) => {
   const defaultForecast = [
     { time: "4h", iconCode: "sunny" },
     { time: "8h", iconCode: "sunny" },
@@ -50,19 +34,28 @@ const mapForecast12h = (forecastStr: string): ForecastItem[] => {
   }
 };
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+/**
+ * API 호출 및 데이터 가공 메인 함수
+ */
 export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<any> => {
   try {
     const response = await fetch(`${BASE_URL}/api/weather${opts?.force ? '?force=true' : ''}`, {
       cache: 'no-store'
     });
+    
     if (!response.ok) throw new Error("Network response error");
     const rawJson = await response.json();
 
     const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
     const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
+    
+    // DB의 원본 시간을 그대로 전달하여 App.tsx에서 KST로 변환하게 함
     const rawTime = rawJson.updated_at || (weatherData.length > 0 ? weatherData[0].time : null);
 
-    const mappedData: AirportWeather[] = weatherData.map((item: any) => {
+    const mappedData = weatherData.map((item: any) => {
+      // 특보 데이터 매칭
       const foundReport = globalReports.find((r: any) =>
         item.name.includes(r.airport) || r.airport.includes(item.name.replace('공항', ''))
       );
@@ -81,17 +74,25 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
       };
     });
 
+    // 공항 정렬 순서
     const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
-    mappedData.sort((a, b) => {
+    mappedData.sort((a: any, b: any) => {
       const indexA = SORT_ORDER.indexOf(a.icao);
       const indexB = SORT_ORDER.indexOf(b.icao);
       return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
     });
 
-    return { data: mappedData, lastUpdated: rawTime, special_reports: globalReports };
+    return { 
+      data: mappedData, 
+      lastUpdated: rawTime, 
+      special_reports: globalReports 
+    };
   } catch (error) {
+    console.error("Fetch Error:", error);
     return { data: [], lastUpdated: null, special_reports: [] };
   }
 };
 
+// 빌드 에러 방지용 Mock 함수들
 export const saveWeatherSnapshot = async (data: any) => ({ success: true });
+export const fetchForecastFromApi = async (icao: string) => null;
