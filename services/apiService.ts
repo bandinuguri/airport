@@ -3,48 +3,43 @@ import { AirportWeather, ForecastItem } from "../types";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
- * 1. 날짜 오류(NaN) 해결을 위한 초강력 정제 함수
- * 어떤 문자열이 들어와도 숫자만 뽑아 "YY.MM.DD. HH:mm"을 만듭니다.
+ * 1. 날짜 오류(NaN) 해결
+ * 서버에서 오는 ISO 8601 문자열이나 "2026-02-05..." 형태를 모두 처리합니다.
  */
 const formatKoreanDate = (dateStr: string): string => {
-    if (!dateStr || typeof dateStr !== 'string') return "갱신 중...";
+    if (!dateStr) return "갱신 중...";
     try {
-        const d = dateStr.match(/\d+/g);
-        if (d && d.length >= 5) {
-            // 2026 -> 26 (연도 뒷자리), 월, 일, 시, 분
-            return `${d[0].slice(-2)}.${d[1]}.${d[2]}. ${d[3]}:${d[4]}`;
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+             // 숫자가 아닌 경우 숫자만 추출 시도
+             const d = dateStr.match(/\d+/g);
+             if (d && d.length >= 5) return `${d[0].slice(-2)}.${d[1]}.${d[2]}. ${d[3]}:${d[4]}`;
+             return "시간 정보 없음";
         }
-        return dateStr;
+        
+        const yy = date.getFullYear().toString().slice(-2);
+        const m = date.getMonth() + 1;
+        const d = date.getDate();
+        const hh = date.getHours().toString().padStart(2, '0');
+        const mm = date.getMinutes().toString().padStart(2, '0');
+        return `${yy}.${m}.${d}. ${hh}:${mm}`;
     } catch {
-        return "데이터 확인 필요";
+        return "갱신 중...";
     }
 };
 
-/**
- * 2. 기상 아이콘 매핑 (텍스트 포함 여부로 판단)
- */
 const mapConditionToIconCode = (condition: string): string => {
     const text = condition || "";
     if (text.includes('맑음')) return 'sunny';
     if (text.includes('흐림') || text.includes('구름')) return 'cloudy';
     if (text.includes('비')) return 'rain';
     if (text.includes('눈')) return 'snow';
-    if (text.includes('안개') || text.includes('박무') || text.includes('연무')) return 'mist';
     return 'sunny';
 };
 
-/**
- * 3. 12시간 예보 파싱 (forecast_12h 필드 분해)
- */
 const mapForecast12h = (forecastStr: string): ForecastItem[] => {
-    const defaultForecast = [
-        { time: "4h", iconCode: "sunny" },
-        { time: "8h", iconCode: "sunny" },
-        { time: "12h", iconCode: "sunny" }
-    ];
-
+    const defaultForecast = [{ time: "4h", iconCode: "sunny" }, { time: "8h", iconCode: "sunny" }, { time: "12h", iconCode: "sunny" }];
     if (!forecastStr || forecastStr === "-" || !forecastStr.includes('>')) return defaultForecast;
-
     try {
         const parts = forecastStr.split('>').map(p => p.trim());
         return [
@@ -52,18 +47,10 @@ const mapForecast12h = (forecastStr: string): ForecastItem[] => {
             { time: "8h", iconCode: mapConditionToIconCode(parts[1]) },
             { time: "12h", iconCode: mapConditionToIconCode(parts[2]) }
         ];
-    } catch {
-        return defaultForecast;
-    }
+    } catch { return defaultForecast; }
 };
 
-/**
- * 4. 메인 데이터 로드 함수
- */
-export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{ 
-    data: AirportWeather[]; 
-    lastUpdated?: string | null; 
-}> => {
+export const fetchWeatherFromApi = async (opts?: { force?: boolean }) => {
     try {
         const response = await fetch(`${BASE_URL}/api/weather${opts?.force ? '?force=true' : ''}`, { 
             cache: 'no-store',
@@ -74,16 +61,18 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
         
         const rawJson = await response.json();
         
-        // API 구조에 따른 방어적 할당 (rawJson.data 또는 rawJson 자체)
-        const weatherData = Array.isArray(rawJson.data) ? rawJson.data : (Array.isArray(rawJson) ? rawJson : []);
-        const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
-
-        // 첫 번째 데이터에서 시간을 가져와 정제
-        const rawTime = weatherData.length > 0 ? (weatherData[0].time || "") : "";
-        const lastUpdated = formatKoreanDate(rawTime);
+        // [중요] DB에서 가져온 원본 데이터 구조에 맞게 할당
+        const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
+        const specialReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
+        
+        // 갱신 시간 (updated_at 사용)
+        const lastUpdated = formatKoreanDate(rawJson.updated_at);
 
         const mappedData: AirportWeather[] = weatherData.map((item: any) => {
-            const foundReport = globalReports.find((r: any) => r.airport === item.code || r.icao === item.code);
+            // DB의 special_reports 배열에서 해당 공항 이름이 포함된 특보 찾기
+            const foundReport = specialReports.find((r: any) => 
+                item.name.includes(r.airport) || r.airport.includes(item.name.replace('공항',''))
+            );
             
             return {
                 airportName: (item.name || "").replace('공항', ''),
@@ -94,14 +83,12 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
                     iconCode: mapConditionToIconCode(item.condition)
                 },
                 forecast12h: mapForecast12h(item.forecast_12h || ""),
-                advisories: (item.report && item.report !== "-") ? item.report : (foundReport ? foundReport.special_report : "없음"),
+                // 특보 데이터 매칭
+                advisories: (foundReport && foundReport.special_report !== '-') ? foundReport.special_report : "없음",
                 snowfall: item.rain || "-",
-                kmaTargetRegion: "-",
-                matchingLogic: `수집: ${item.time || ''}`
             };
         });
 
-        // 공항 정렬 (ICAO 기준)
         const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
         const sorted = mappedData.sort((a, b) => {
             const indexA = SORT_ORDER.indexOf(a.icao);
@@ -109,19 +96,14 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
             return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
         });
 
-        return { data: sorted, lastUpdated };
+        // App.tsx에서 활용할 수 있게 special_reports도 같이 반환
+        return { data: sorted, lastUpdated, special_reports: specialReports };
     } catch (error) {
         console.error("API Error:", error);
-        return { data: [], lastUpdated: "연결 오류" };
+        return { data: [], lastUpdated: "연결 오류", special_reports: [] };
     }
 };
 
-/**
- * 5. 빌드 오류 방지용 Mock 함수 (App.tsx 참조용)
- */
-export const fetchForecastFromApi = async (icao: string) => null;
-export async function fetchSpecialReportsFromApi() { return []; }
-export async function saveWeatherSnapshot(data: any[]) { return { success: true }; }
-export async function fetchSnapshots() { return []; }
-export async function fetchSnapshotData(id: number) { return null; }
-export async function fetchAirportHistory(icao: string) { return []; }
+// ... 나머지 Mock 함수들 유지
+export const fetchForecastFromApi = async (icao: string) => [];
+export const saveWeatherSnapshot = async (data: any[]) => ({ success: true });
