@@ -3,7 +3,7 @@ name: Scrape weather to Supabase
 on:
   schedule:
     - cron: '0,30 * * * *'  # 30분마다 실행
-  workflow_dispatch:        # 수동 실행 버튼 생성
+  workflow_dispatch:        # 수동 실행 버튼
 
 jobs:
   scrape:
@@ -18,7 +18,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 psycopg2-binary
+          pip install requests beautifulsoup4 psycopg2-binary playwright
+          # Playwright 실행을 위한 브라우저 및 시스템 라이브러리 설치
+          playwright install chromium
+          playwright install-deps chromium
 
       - name: Run scraper and save to Supabase
         env:
