@@ -33,26 +33,16 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
         const force = !!opts?.force;
         const weatherUrl = `${BASE_URL}/api/weather${force ? '?force=true' : ''}`;
         
-        // [수정됨] 캐시를 사용하지 않고 매번 DB에서 새 데이터를 가져오도록 설정
+        // 캐시를 사용하지 않고 매번 DB에서 새 데이터를 가져오도록 설정
         const weatherRes = await fetch(weatherUrl, { cache: 'no-store' });
         const reportRes = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
 
-        if (!weatherRes.ok) {
-            let msg = "기상 데이터를 가져오지 못했습니다.";
-            try {
-                const errBody = await weatherRes.json().catch(() => ({}));
-                const detail = errBody?.detail ?? errBody?.error ?? errBody?.message;
-                if (detail) msg = typeof detail === 'string' ? detail : JSON.stringify(detail);
-            } catch {
-                if (weatherRes.status === 502 || weatherRes.status === 504)
-                    msg = "백엔드 서버에 연결할 수 없습니다. 터미널에서 'npm run dev'로 실행했는지 확인하세요.";
-            }
-            throw new Error(msg);
-        }
+        if (!weatherRes.ok) throw new Error("기상 데이터를 가져오지 못했습니다.");
 
         const parsed = await parseWeatherResponse(weatherRes);
         const weatherData = parsed.raw;
 
+        // 특보 데이터 매핑 준비
         let specialReports: any[] = parsed.specialReports ?? [];
         if (specialReports.length === 0) {
             try {
@@ -62,24 +52,24 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
             }
         }
 
-        // Defined Sort Order
+        // 정렬 순서 정의
         const SORT_ORDER = [
             'RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU',
             'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY',
             'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'
         ];
 
-        // Display Name Mapping
+        // 표시 이름 매핑
         const DISPLAY_NAMES: { [key: string]: string } = {
             'RKSI': '인천', 'RKSS': '김포', 'RKPC': '제주', 'RKPK': '김해', 'RKTU': '청주',
             'RKTN': '대구', 'RKPU': '울산', 'RKJB': '무안', 'RKJJ': '광주', 'RKJY': '여수',
             'RKNY': '양양', 'RKPS': '사천', 'RKTH': '포항', 'RKJK': '군산', 'RKNW': '원주'
         };
 
-        // Map scraper data to AirportWeather interface
+        // DB 데이터를 화면용 인터페이스로 변환
         const mappedData = weatherData.map((item: any) => {
-            // Find matching special report
-            const report = specialReports.find((r: any) => item.name.includes(r.airport));
+            // 특보 확인 (현재 DB의 special_reports 컬럼 연동)
+            const report = specialReports.find((r: any) => item.code === r.airport || item.name.includes(r.airport));
             const advisoryText = report ? report.special_report : "-";
 
             return {
@@ -87,35 +77,33 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
                 icao: item.code,
                 current: {
                     condition: item.condition,
-                    temperature: item.temp,
-                    iconCode: mapIconClassToCode(item.iconClass)
+                    temperature: item.temp ? item.temp.toString().replace('℃', '') : "-",
+                    iconCode: mapIconClassToCode(item.iconClass || "")
                 },
-                forecast12h: mapForecast12h(item.forecast_12h),
+                // [수정] DB의 forecast_12h 필드를 사용하여 예보 버튼 활성화
+                forecast12h: mapForecast12h(item.forecast_12h || item.forecast || ""),
                 advisories: advisoryText === "-" && item.condition === "-" ? "-" : (advisoryText === "-" ? "없음" : advisoryText),
-                snowfall: "-",
+                snowfall: item.rain || "-", // DB의 'rain' 필드가 적설/강수 정보일 경우 매핑
                 kmaTargetRegion: "-",
                 matchingLogic: `데이터 수집 시각: ${item.time}`
             };
         });
 
-        // Sort data
+        // 정렬 적용
         const sorted = mappedData.sort((a: AirportWeather, b: AirportWeather) => {
             const indexA = SORT_ORDER.indexOf(a.icao);
             const indexB = SORT_ORDER.indexOf(b.icao);
             return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
         });
-        return { data: sorted, cached: parsed.cached, lastUpdated: parsed.lastUpdated, warning: parsed.warning };
+        
+        return { data: sorted, cached: false, lastUpdated: parsed.lastUpdated, warning: parsed.warning };
     } catch (error: any) {
         console.error("API Fetch Error:", error);
-        const msg = error?.message ?? String(error);
-        if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Load failed"))
-            throw new Error("백엔드 서버에 연결할 수 없습니다. 터미널에서 'npm run dev'로 실행했는지 확인하세요.");
         throw error;
     }
 };
 
 export async function fetchSpecialReportsFromApi() {
-    // [수정됨] 캐시 방지 옵션 추가
     const response = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch special reports');
     return response.json();
@@ -133,7 +121,6 @@ export async function saveWeatherSnapshot(weatherData: any[]) {
 }
 
 export async function fetchSnapshots() {
-    // [수정됨] 캐시 방지 옵션 추가
     const response = await fetch(`${BASE_URL}/api/history/snapshots`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Failed to fetch snapshots');
     return response.json();
@@ -162,21 +149,22 @@ export const fetchForecastFromApi = async (icao: string) => {
     }
 };
 
-// Helper to map scraper's icon class to our iconCode
+// 아이콘 클래스 매핑 헬퍼
 const mapIconClassToCode = (iconClass: string): string => {
-    if (iconClass.includes('sunny')) return 'sunny';
-    if (iconClass.includes('cloudy')) return 'cloudy';
-    if (iconClass.includes('rain')) return 'rain';
-    if (iconClass.includes('snow')) return 'snow';
-    if (iconClass.includes('mist')) return 'mist';
-    if (iconClass.includes('wind')) return 'wind';
-    if (iconClass.includes('thunder')) return 'thunderstorm';
-    return 'sunny'; // Default
+    const lower = iconClass.toLowerCase();
+    if (lower.includes('sunny') || lower.includes('clear')) return 'sunny';
+    if (lower.includes('cloudy') || lower.includes('mostly')) return 'cloudy';
+    if (lower.includes('rain')) return 'rain';
+    if (lower.includes('snow')) return 'snow';
+    if (lower.includes('mist') || lower.includes('fog')) return 'mist';
+    if (lower.includes('wind')) return 'wind';
+    if (lower.includes('thunder')) return 'thunderstorm';
+    return 'sunny';
 };
 
-// Helper to map forecast string "A > B > C" to ForecastItem array
+// 예보 문자열("맑음 > 흐림 > 비")을 객체 배열로 변환
 const mapForecast12h = (forecastStr: string): ForecastItem[] => {
-    if (!forecastStr || forecastStr === " - ") {
+    if (!forecastStr || forecastStr === " - " || forecastStr === "-") {
         return [
             { time: "4h", iconCode: "sunny" },
             { time: "8h", iconCode: "sunny" },
@@ -186,19 +174,19 @@ const mapForecast12h = (forecastStr: string): ForecastItem[] => {
 
     const conditions = forecastStr.split(' > ');
     return [
-        { time: "4h", iconCode: mapConditionToIconCode(conditions[0]) },
-        { time: "8h", iconCode: mapConditionToIconCode(conditions[1]) },
-        { time: "12h", iconCode: mapConditionToIconCode(conditions[2]) }
+        { time: "4h", iconCode: mapConditionToIconCode(conditions[0] || "") },
+        { time: "8h", iconCode: mapConditionToIconCode(conditions[1] || "") },
+        { time: "12h", iconCode: mapConditionToIconCode(conditions[2] || "") }
     ];
 };
 
 const mapConditionToIconCode = (condition: string): string => {
     if (!condition) return 'sunny';
     if (condition.includes('맑음')) return 'sunny';
-    if (condition.includes('흐림') || condition.includes('구름')) return 'cloudy';
+    if (condition.includes('흐림') || condition.includes('구름') || condition.includes('점차')) return 'cloudy';
     if (condition.includes('비')) return 'rain';
     if (condition.includes('눈')) return 'snow';
     if (condition.includes('박무') || condition.includes('안개')) return 'mist';
-    if (condition.includes('낙뢰')) return 'thunderstorm';
+    if (condition.includes('낙뢰') || condition.includes('번개')) return 'thunderstorm';
     return 'sunny';
 };
