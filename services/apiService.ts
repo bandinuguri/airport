@@ -1,8 +1,26 @@
 // services/apiService.ts
 
+// 빌드 에러 방지를 위해 내부 인터페이스 정의
+export interface ForecastItem {
+  time: string;
+  iconCode: string;
+}
+
+export interface AirportWeather {
+  airportName: string;
+  icao: string;
+  current: {
+    condition: string;
+    temperature: string;
+    iconCode: string;
+  };
+  forecast12h: ForecastItem[];
+  advisories: string;
+  snowfall: string;
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// 기상 상태 아이콘 매핑 함수
 const mapConditionToIconCode = (condition: string): string => {
   const text = condition || "";
   if (text.includes('맑음')) return 'sunny';
@@ -13,8 +31,7 @@ const mapConditionToIconCode = (condition: string): string => {
   return 'sunny';
 };
 
-// 12시간 예보 파싱 함수
-const mapForecast12h = (forecastStr: string) => {
+const mapForecast12h = (forecastStr: string): ForecastItem[] => {
   const defaultForecast = [
     { time: "4h", iconCode: "sunny" },
     { time: "8h", iconCode: "sunny" },
@@ -38,15 +55,14 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
     const response = await fetch(`${BASE_URL}/api/weather${opts?.force ? '?force=true' : ''}`, {
       cache: 'no-store'
     });
-
-    if (!response.ok) throw new Error("Network response was not ok");
+    if (!response.ok) throw new Error("Network response error");
     const rawJson = await response.json();
 
     const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
     const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
     const rawTime = rawJson.updated_at || (weatherData.length > 0 ? weatherData[0].time : null);
 
-    const mappedData = weatherData.map((item: any) => {
+    const mappedData: AirportWeather[] = weatherData.map((item: any) => {
       const foundReport = globalReports.find((r: any) =>
         item.name.includes(r.airport) || r.airport.includes(item.name.replace('공항', ''))
       );
@@ -65,9 +81,8 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
       };
     });
 
-    // 정렬 로직
     const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
-    mappedData.sort((a: any, b: any) => {
+    mappedData.sort((a, b) => {
       const indexA = SORT_ORDER.indexOf(a.icao);
       const indexB = SORT_ORDER.indexOf(b.icao);
       return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
@@ -75,7 +90,6 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
 
     return { data: mappedData, lastUpdated: rawTime, special_reports: globalReports };
   } catch (error) {
-    console.error("API Fetch Error:", error);
     return { data: [], lastUpdated: null, special_reports: [] };
   }
 };
