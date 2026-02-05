@@ -1,92 +1,26 @@
-import os
-import json
-import requests
-from bs4 import BeautifulSoup
-import psycopg2
-from datetime import datetime
+name: Scrape weather to Supabase
 
-# 1. 기상청 전체 특보 크롤링 함수 (새로 추가)
-def get_kma_special_reports():
-    """기상청 특보 페이지에서 요약 문구를 가져옵니다."""
-    url = "https://www.weather.go.kr/w/special-report/overall.do"
-    try:
-        # User-Agent를 설정하여 봇 차단을 방지합니다.
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        res = requests.get(url, headers=headers, timeout=10)
-        res.raise_for_status()
-        
-        soup = BeautifulSoup(res.text, 'html.parser')
-        # 특보 요약이 담긴 박스 선택
-        warning_box = soup.select_one('.warning-box')
-        
-        if warning_box:
-            # '상세내용' 버튼 텍스트 등을 제외하고 순수 텍스트만 추출
-            report_text = warning_box.get_text(" ", strip=True).replace("상세내용", "").strip()
-            return report_text
-        return "발효된 특보가 없습니다."
-    except Exception as e:
-        print(f"기상청 특보 크롤링 실패: {e}")
-        return "특보 정보를 가져오지 못했습니다."
+on:
+  schedule:
+    - cron: '0,30 * * * *'  # 30분마다 실행
+  workflow_dispatch:        # 수동 실행 버튼 생성
 
-# 2. 공항별 METAR 데이터 수집 (기존 로직 유지/보강)
-def collect_airport_weather():
-    """
-    기존에 사용하시던 항공기상청 데이터 수집 로직을 여기에 구현합니다.
-    (예시 데이터 구조를 반환하도록 작성되었습니다.)
-    """
-    # 실제 구현부에서는 기존 scraper.py의 수집 로직을 여기에 넣으세요.
-    # 예: weather_list = [ {"code": "RKSI", "temp": "2.5", "condition": "맑음", ...}, ... ]
-    weather_list = [] 
-    
-    # ... (기존 수집 코드) ...
-    
-    return weather_list
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-def run():
-    # 데이터베이스 연결 문자열 (GitHub Secrets에서 가져옴)
-    db_url = os.environ.get("DATABASE_URL")
-    if not db_url:
-        print("에러: DATABASE_URL 환경변수가 설정되지 않았습니다.")
-        return
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    print(f"데이터 수집 시작: {datetime.now()}")
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 psycopg2-binary
 
-    try:
-        # A. 기상 데이터 수집
-        weather_data = collect_airport_weather() 
-        
-        # B. 기상청 특보 데이터 수집 (추가된 부분)
-        special_report_msg = get_kma_special_reports()
-        # 프론트엔드 apiService.ts가 기대하는 배열 형식으로 구성
-        special_reports_json = [{"special_report": special_report_msg, "airport": "ALL"}]
-
-        # C. Supabase (PostgreSQL) 연결 및 저장
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-
-        # weather_latest 테이블의 id=1 레코드를 업데이트합니다.
-        # data 컬럼에는 공항별 날씨를, special_reports 컬럼에는 기상청 특보를 넣습니다.
-        query = """
-            INSERT INTO weather_latest (id, data, special_reports, updated_at)
-            VALUES (1, %s, %s, NOW())
-            ON CONFLICT (id) DO UPDATE 
-            SET data = EXCLUDED.data,
-                special_reports = EXCLUDED.special_reports,
-                updated_at = NOW();
-        """
-        
-        cur.execute(query, (json.dumps(weather_data), json.dumps(special_reports_json)))
-        
-        conn.commit()
-        print(f"성공: DB 업데이트 완료 (특보 내용: {special_report_msg[:30]}...)")
-
-    except Exception as e:
-        print(f"실행 중 에러 발생: {e}")
-    finally:
-        if 'cur' in locals(): cur.close()
-        if 'conn' in locals(): conn.close()
-
-if __name__ == "__main__":
-    run()
+      - name: Run scraper and save to Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scraper.py
