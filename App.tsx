@@ -5,7 +5,7 @@ import WeatherTable from './components/WeatherTable';
 import { fetchWeatherFromApi, saveWeatherSnapshot } from './services/apiService';
 import { AirportWeather } from './types';
 
-const CACHE_KEY = 'aviation_weather_cache_v3';
+const CACHE_KEY = 'aviation_weather_cache_v5';
 
 interface CacheData {
   timestamp: number;
@@ -22,78 +22,92 @@ const App: React.FC = () => {
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
   const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
-  // 날짜 포맷팅 함수 (초기 로딩 시 사용)
-  const formatUpdateTimestamp = (dateInput: any) => {
+  /**
+   * [필독] 한국 시간(KST) 변환 함수
+   * Intl.DateTimeFormat을 사용하여 브라우저 타임존 문제를 완전히 해결합니다.
+   */
+  const formatToKST = (dateInput: any) => {
     if (!dateInput) return "갱신 중...";
     const date = new Date(dateInput);
+    
+    // 날짜 객체 생성 실패 시
     if (isNaN(date.getTime())) {
       return typeof dateInput === 'string' ? dateInput : "갱신 중...";
     }
-    const yy = date.getFullYear().toString().slice(-2);
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
-    const hh = date.getHours().toString().padStart(2, '0');
-    const mm = date.getMinutes().toString().padStart(2, '0');
-    return `${yy}.${m}.${d}. ${hh}:${mm}`;
+
+    try {
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: '2-digit',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Seoul'
+      }).format(date).replace(/\s/g, '').replace(/(\d+)\.(\d+)\.(\d+)\./, '$1.$2.$3. ');
+    } catch (e) {
+      // Intl 미지원 브라우저 대비 수동 포맷팅
+      const yy = date.getFullYear().toString().slice(-2);
+      const m = date.getMonth() + 1;
+      const d = date.getDate();
+      const hh = date.getHours().toString().padStart(2, '0');
+      const mm = date.getMinutes().toString().padStart(2, '0');
+      return `${yy}.${m}.${d}. ${hh}:${mm}`;
+    }
   };
 
   const runCollectionModule = useCallback(async (force: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
-      setRefreshSuccess(false);
 
-      // 1. API 호출 (force 옵션 전달)
       const result = await fetchWeatherFromApi({ force });
       
       if (result.data && result.data.length > 0) {
-        // 2. DB에서 넘어온 원본 시간을 포맷팅
-        const newUpdateStr = formatUpdateTimestamp(result.lastUpdated);
+        // [수정] 서버 원본 시간을 한국 시간으로 변환
+        const timeStr = formatToKST(result.lastUpdated);
+        const finalUpdateStr = `갱신 ${timeStr}`;
         
-        // 3. 상태 업데이트 (이 부분이 실행되어야 화면 시간이 바뀝니다)
         setData(result.data);
-        setSpecialReports(result.special_reports || []);
-        setLastUpdatedStr(`갱신 ${newUpdateStr}`);
+        setSpecialReports(result.special_reports);
+        setLastUpdatedStr(finalUpdateStr);
 
-        // 4. 로컬 스토리지 캐시 갱신
-        const cacheObject: CacheData = {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
           timestamp: Date.now(),
           data: result.data,
-          specialReports: result.special_reports || [],
-          lastUpdated: `갱신 ${newUpdateStr}`
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
+          specialReports: result.special_reports,
+          lastUpdated: finalUpdateStr
+        }));
 
         if (force) {
           setRefreshSuccess(true);
           setTimeout(() => setRefreshSuccess(false), 2000);
-          // 스냅샷 저장 (선택 사항)
-          await saveWeatherSnapshot(result.data).catch(e => console.warn(e));
+          await saveWeatherSnapshot(result.data).catch(() => {});
         }
+      } else {
+        throw new Error("데이터를 수집할 수 없습니다.");
       }
     } catch (err: any) {
-      console.error("Fetch Error:", err);
-      setError("데이터를 갱신할 수 없습니다.");
+      console.error("Fetch error:", err);
+      setError("실시간 정보를 불러올 수 없습니다.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 초기 로드: 캐시 확인 후 API 호출
   useEffect(() => {
     const saved = localStorage.getItem(CACHE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as CacheData;
         setData(parsed.data);
-        setSpecialReports(parsed.specialReports || []);
+        setSpecialReports(parsed.specialReports);
         setLastUpdatedStr(parsed.lastUpdated);
       } catch (e) {
-        console.error("Cache load error");
+        console.error("Cache error");
       }
     }
-    // 캐시가 있더라도 최신 데이터를 위해 호출 (새로고침 버튼 누른 것과 같은 효과)
-    runCollectionModule(false); 
+    runCollectionModule(false);
   }, [runCollectionModule]);
 
   return (
@@ -101,36 +115,37 @@ const App: React.FC = () => {
       <header>
         <div className="header-title-group">
           <div className="header-icon">
-             <Plane size={24} fill="currentColor" onClick={() => (window as any).navigateTo('/history')} style={{cursor:'pointer'}}/>
+            <button onClick={() => (window as any).navigateTo('/history')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+              <Plane size={24} fill="currentColor" />
+            </button>
           </div>
           <div className="header-info">
             <h1>전국 공항 실시간 기상</h1>
-            {/* 실시간 갱신된 시간 표시 */}
-            <span>{lastUpdatedStr}</span>
+            <span>{lastUpdatedStr || "연결 중..."}</span>
           </div>
         </div>
-        <button
-          className="refresh-btn"
-          onClick={() => runCollectionModule(true)}
-          disabled={loading}
-        >
+        <button className="refresh-btn" onClick={() => runCollectionModule(true)} disabled={loading}>
           {loading ? <RefreshCw size={18} className="spin" /> : refreshSuccess ? <Check size={18} /> : <RefreshCw size={18} />}
         </button>
       </header>
 
       <div className="info-banner">
         <Info size={18} />
-        <span>최신 기상정보는 해당 공항 클릭 확인, 특보는 기상특보 클릭 / 갱신은 10분 마다 사용 가능</span>
+        <span>최신 기상정보는 해당 공항 클릭 확인, 특보는 기상특보 메뉴 참조</span>
       </div>
 
       <div className="animate-fade">
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error-banner">{error}</div>}
         <WeatherTable 
           weatherData={data} 
           specialReports={specialReports} 
           isLoading={loading && data.length === 0} 
         />
       </div>
+      
+      <footer style={{ marginTop: '40px', textAlign: 'center', paddingBottom: '40px', color: '#94a3b8', fontSize: '0.75rem' }}>
+        © 2026 Aviation Weather Dashboard.
+      </footer>
     </div>
   );
 };
