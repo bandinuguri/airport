@@ -1,9 +1,11 @@
 import { AirportWeather, ForecastItem } from "../types";
 
+// 개발 환경: Vite 프록시 사용 / 프로덕션: Vercel 통합 도메인 사용
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
  * 1. 기상 상태 텍스트를 아이콘 코드로 변환하는 헬퍼
+ * DB의 'condition'이나 'forecast_12h'에 포함된 한글 텍스트를 기반으로 합니다.
  */
 const mapConditionToIconCode = (condition: string): string => {
     if (!condition) return 'sunny';
@@ -18,10 +20,12 @@ const mapConditionToIconCode = (condition: string): string => {
 };
 
 /**
- * 2. 3일 예보 문자열 처리 헬퍼 (공백 제거 로직 포함)
+ * 2. 3일 예보(12시간 예보) 문자열 처리 헬퍼
+ * DB의 "구름조금 > 맑음 > 맑음" 형태를 분해하여 아이콘을 할당합니다.
  */
 const mapForecast12h = (forecastStr: string): ForecastItem[] => {
-    if (!forecastStr || forecastStr === "-" || forecastStr.trim() === "") {
+    // 데이터가 없거나 형식이 맞지 않는 경우 처리
+    if (!forecastStr || forecastStr === "-" || !forecastStr.includes('>')) {
         return [
             { time: "4h", iconCode: "sunny" },
             { time: "8h", iconCode: "sunny" },
@@ -29,6 +33,7 @@ const mapForecast12h = (forecastStr: string): ForecastItem[] => {
         ];
     }
 
+    // '>' 기호를 기준으로 나누고 trim()으로 공백을 제거합니다.
     const conditions = forecastStr.split('>').map(s => s.trim());
     
     return [
@@ -51,35 +56,23 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
         const force = !!opts?.force;
         const weatherUrl = `${BASE_URL}/api/weather${force ? '?force=true' : ''}`;
         
-        const [weatherRes, reportRes] = await Promise.all([
-            fetch(weatherUrl, { cache: 'no-store' }),
-            fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' }).catch(() => ({ ok: false }))
-        ]);
+        // 캐시를 무시하고 데이터를 가져옵니다.
+        const response = await fetch(weatherUrl, { cache: 'no-store' });
 
-        if (!weatherRes.ok) throw new Error("기상 데이터를 불러오는 데 실패했습니다.");
+        if (!response.ok) throw new Error("기상 데이터를 불러오는 데 실패했습니다.");
 
-        const rawJson = await weatherRes.json();
+        const rawJson = await response.json();
+        // weather_latest 테이블의 data JSONB 컬럼에서 배열 추출
         const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
         
-        let specialReports: any[] = [];
-        try {
-            if (reportRes && 'json' in reportRes && reportRes.ok) {
-                specialReports = await (reportRes as Response).json();
-            }
-        } catch(e) {
-            console.warn("특보 로딩 실패", e);
-        }
-
+        // 공항 정렬 순서 및 표시 이름 정의
         const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
         const DISPLAY_NAMES: { [key: string]: string } = { 'RKSI': '인천', 'RKSS': '김포', 'RKPC': '제주', 'RKPK': '김해', 'RKTU': '청주', 'RKTN': '대구', 'RKPU': '울산', 'RKJB': '무안', 'RKJJ': '광주', 'RKJY': '여수', 'RKNY': '양양', 'RKPS': '사천', 'RKTH': '포항', 'RKJK': '군산', 'RKNW': '원주' };
 
-        // 갱신 시간: 데이터의 'time' 필드 우선 활용
-        let latestUpdate = rawJson.last_updated || (weatherData.length > 0 ? weatherData[0].time : null);
+        // 갱신 시간 결정: DB 레코드 내부의 'time' 필드를 사용
+        const latestUpdate = weatherData.length > 0 ? weatherData[0].time : null;
 
         const mappedData: AirportWeather[] = weatherData.map((item: any) => {
-            const report = Array.isArray(specialReports) ? specialReports.find((r: any) => r.airport === item.code) : null;
-            const advisoryText = report ? report.special_report : (item.report || "-");
-
             return {
                 airportName: DISPLAY_NAMES[item.code] || (item.name ? item.name.replace('공항', '') : '알 수 없음'),
                 icao: item.code,
@@ -88,8 +81,9 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
                     temperature: item.temp ? item.temp.toString().replace('℃', '').trim() : "-",
                     iconCode: mapConditionToIconCode(item.condition || "")
                 },
-                forecast12h: mapForecast12h(item.forecast_12h || item.forecast || ""),
-                advisories: advisoryText === "-" || advisoryText === "" ? "없음" : advisoryText,
+                // [수정 핵심] DB의 'forecast_12h' 필드를 직접 사용하여 매핑
+                forecast12h: mapForecast12h(item.forecast_12h || ""),
+                advisories: item.report && item.report !== "-" ? item.report : "없음",
                 snowfall: item.rain || "-",
                 kmaTargetRegion: "-",
                 matchingLogic: `수집 시각: ${item.time || ''}`
@@ -115,67 +109,35 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<{
 };
 
 /**
- * 4. App.tsx 및 컴포넌트에서 참조하는 필수 export 함수들
+ * 4. App.tsx 및 기타 컴포넌트에서 참조하는 필수 export 함수들 (빌드 에러 방지용)
  */
-
-// [추가] 3일 예보 상세 조회를 위해 App.tsx에서 참조할 수 있음
 export const fetchForecastFromApi = async (icao: string) => {
-    try {
-        const response = await fetch(`${BASE_URL}/api/forecast/${icao}`, { cache: 'no-store' });
-        if (!response.ok) return null;
-        return await response.json();
-    } catch (error) {
-        console.error("Forecast Fetch Error:", error);
-        return null;
-    }
+    const response = await fetch(`${BASE_URL}/api/forecast/${icao}`, { cache: 'no-store' });
+    return response.ok ? response.json() : null;
 };
 
 export async function fetchSpecialReportsFromApi() {
-    try {
-        const response = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
-        return response.ok ? await response.json() : [];
-    } catch {
-        return [];
-    }
+    const response = await fetch(`${BASE_URL}/api/special-reports`, { cache: 'no-store' });
+    return response.ok ? response.json() : [];
 }
 
 export async function saveWeatherSnapshot(weatherData: any[]) {
-    try {
-        const response = await fetch(`${BASE_URL}/api/history/save`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(weatherData)
-        });
-        return await response.json();
-    } catch (error) {
-        console.error("Save Snapshot Error:", error);
-        return { success: false };
-    }
+    const response = await fetch(`${BASE_URL}/api/history/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(weatherData)
+    });
+    return response.ok ? response.json() : { success: false };
 }
 
 export async function fetchSnapshots() {
-    try {
-        const response = await fetch(`${BASE_URL}/api/history/snapshots`, { cache: 'no-store' });
-        return response.ok ? await response.json() : [];
-    } catch {
-        return [];
-    }
+    const response = await fetch(`${BASE_URL}/api/history/snapshots`, { cache: 'no-store' });
+    return response.ok ? response.json() : [];
 }
 
 export async function fetchSnapshotData(snapshotId: number) {
-    try {
-        const response = await fetch(`${BASE_URL}/api/history/snapshot/${snapshotId}`, { cache: 'no-store' });
-        return response.ok ? await response.json() : null;
-    } catch {
-        return null;
-    }
+    const response = await fetch(`${BASE_URL}/api/history/snapshot/${snapshotId}`, { cache: 'no-store' });
+    return response.ok ? response.json() : null;
 }
 
-export async function fetchAirportHistory(airportCode: string) {
-    try {
-        const response = await fetch(`${BASE_URL}/api/history/airport/${airportCode}`, { cache: 'no-store' });
-        return response.ok ? await response.json() : [];
-    } catch {
-        return [];
-    }
-}
+export async function fetchAirportHistory(airportCode:
