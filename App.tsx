@@ -1,10 +1,11 @@
+// App.tsx
 import './styles/amo.css';
 import { Plane, RefreshCw, Info, Check } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import WeatherTable from './components/WeatherTable';
 import { fetchWeatherFromApi, saveWeatherSnapshot } from './services/apiService';
 
-const CACHE_KEY = 'aviation_weather_cache_v7';
+const CACHE_KEY = 'aviation_weather_cache_v8';
 
 const App: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
@@ -14,7 +15,7 @@ const App: React.FC = () => {
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
   const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
-  // 한국 시간 포맷 (이미지 형식에 맞춤)
+  // 한국 시간 포맷팅 (UTC -> KST 변환 보장)
   const formatToKST = (dateInput: any) => {
     if (!dateInput) return "갱신 중...";
     const date = new Date(dateInput);
@@ -30,27 +31,32 @@ const App: React.FC = () => {
   const runCollectionModule = useCallback(async (force: boolean = false) => {
     try {
       setLoading(true);
+      setError(null);
       const result = await fetchWeatherFromApi({ force });
+      
       if (result && result.data) {
         const timeStr = formatToKST(result.lastUpdated);
+        const finalTimeLabel = `갱신 ${timeStr}`;
+        
         setData(result.data);
         setSpecialReports(result.special_reports || []);
-        setLastUpdatedStr(`갱신 ${timeStr}`);
+        setLastUpdatedStr(finalTimeLabel);
 
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           data: result.data,
           specialReports: result.special_reports,
-          lastUpdated: `갱신 ${timeStr}`,
+          lastUpdated: finalTimeLabel,
           timestamp: Date.now()
         }));
 
         if (force) {
           setRefreshSuccess(true);
           setTimeout(() => setRefreshSuccess(false), 2000);
+          saveWeatherSnapshot(result.data).catch(() => {});
         }
       }
     } catch (err) {
-      setError("데이터를 가져오는 데 실패했습니다.");
+      setError("데이터 갱신 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -59,22 +65,34 @@ const App: React.FC = () => {
   useEffect(() => {
     const saved = localStorage.getItem(CACHE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setData(parsed.data || []);
-      setSpecialReports(parsed.specialReports || []);
-      setLastUpdatedStr(parsed.lastUpdated || '');
+      try {
+        const parsed = JSON.parse(saved);
+        setData(parsed.data || []);
+        setSpecialReports(parsed.specialReports || []);
+        setLastUpdatedStr(parsed.lastUpdated || '');
+      } catch (e) {
+        console.error("Cache load fail");
+      }
     }
     runCollectionModule(false);
   }, [runCollectionModule]);
+
+  // 안전한 페이지 이동 함수
+  const safeNavigate = (path: string) => {
+    if ((window as any).navigateTo) {
+      (window as any).navigateTo(path);
+    } else {
+      window.location.hash = path; // Fallback
+    }
+  };
 
   return (
     <div className="amo-container">
       <header>
         <div className="header-title-group">
           <div className="header-icon">
-            {/* History 페이지로 이동하는 링크 복구 */}
             <button 
-              onClick={() => (window as any).navigateTo?.('/history')} 
+              onClick={() => safeNavigate('/history')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}
             >
               <Plane size={24} fill="currentColor" />
@@ -90,13 +108,12 @@ const App: React.FC = () => {
         </button>
       </header>
 
-      {/* 안내 배너의 링크 텍스트 복구 */}
       <div className="info-banner">
         <Info size={18} />
         <span>
           최신 기상정보는 해당 공항 클릭 확인, 특보는 
           <span 
-            onClick={() => (window as any).navigateTo?.('/special-reports')} 
+            onClick={() => safeNavigate('/special-reports')} 
             style={{ color: '#2563eb', fontWeight: 'bold', cursor: 'pointer', margin: '0 4px', textDecoration: 'underline' }}
           >
             기상특보 메뉴
