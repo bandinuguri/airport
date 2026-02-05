@@ -10,7 +10,7 @@ const mapConditionToIconCode = (condition: string): string => {
     return 'sunny';
 };
 
-// [복구] 12시간 예보 파싱 로직
+// 12시간 예보 파싱 함수 복구
 const mapForecast12h = (forecastStr: string) => {
     const defaultForecast = [
         { time: "4h", iconCode: "sunny" },
@@ -33,14 +33,11 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
         const response = await fetch(`${BASE_URL}/api/weather${opts?.force ? '?force=true' : ''}`, { 
             cache: 'no-store'
         });
-        
         if (!response.ok) throw new Error("Network response was not ok");
         const rawJson = await response.json();
         
         const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
         const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
-        
-        // [중요] DB의 updated_at을 원본 그대로 전달
         const rawTime = rawJson.updated_at || (weatherData.length > 0 ? weatherData[0].time : null);
 
         const mappedData = weatherData.map((item: any) => {
@@ -56,8 +53,7 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
                     temperature: item.temp ? String(item.temp).replace('℃', '').trim() : "-",
                     iconCode: mapConditionToIconCode(item.condition)
                 },
-                // [복구됨] 예보 정보 다시 매핑
-                forecast12h: mapForecast12h(item.forecast_12h || ""),
+                forecast12h: mapForecast12h(item.forecast_12h || ""), // 예보 복구
                 advisories: (foundReport && foundReport.special_report !== "-") ? foundReport.special_report : (item.report !== "-" ? item.report : "없음"),
                 snowfall: item.rain || "-",
             };
@@ -77,4 +73,3 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
 };
 
 export const saveWeatherSnapshot = async (data: any) => ({ success: true });
-export const fetchForecastFromApi = async (icao: string) => null;
