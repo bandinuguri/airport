@@ -1,67 +1,90 @@
-// App.tsx
-import './styles/amo.css';
-import { Plane, RefreshCw, Info, Check } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
+import { Plane, RefreshCw, Info, Check } from 'lucide-react';
+import './styles/amo.css';
 import WeatherTable from './components/WeatherTable';
-import { fetchWeatherFromApi, saveWeatherSnapshot } from './services/apiService';
+import { fetchWeatherFromApi } from './services/apiService';
 
-const CACHE_KEY = 'aviation_weather_cache_v8';
+const CACHE_KEY = 'aviation_weather_cache_v1';
 
 const App: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [specialReports, setSpecialReports] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
+  const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('갱신 중...');
   const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
-  // 한국 시간 포맷팅 (UTC -> KST 변환 보장)
+  /**
+   * 서버에서 온 날짜 문자열을 한국 시간(KST) 포맷으로 변환합니다.
+   * 이미지 형식: 2026년 2월 5일(목) 16:00(KST)
+   */
   const formatToKST = (dateInput: any) => {
-    if (!dateInput) return "갱신 중...";
-    const date = new Date(dateInput);
+    if (!dateInput) return "시간 정보 없음";
+    
+    // 서버 응답 "2026-02-05 08:48" 등을 모든 브라우저 호환 포맷으로 변경
+    const date = new Date(String(dateInput).replace(/-/g, '/'));
+    
     if (isNaN(date.getTime())) return String(dateInput);
 
-    return new Intl.DateTimeFormat('ko-KR', {
-      year: 'numeric', month: 'long', day: 'numeric',
-      weekday: 'short', hour: '2-digit', minute: '2-digit',
-      hour12: false, timeZone: 'Asia/Seoul'
-    }).format(date).replace('요일', '') + "(KST)";
+    try {
+      const formatter = new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Seoul'
+      });
+      
+      const parts = formatter.formatToParts(date);
+      const p: any = {};
+      parts.forEach(part => { p[part.type] = part.value; });
+      
+      // 이미지(image_c15ea0.png)와 동일한 포맷 구성
+      return `${p.year}년 ${p.month} ${p.day}(${p.weekday}) ${p.hour}:${p.minute}(KST)`;
+    } catch (e) {
+      return date.toLocaleString();
+    }
   };
 
+  /**
+   * API로부터 데이터를 수집하고 상태를 업데이트합니다.
+   */
   const runCollectionModule = useCallback(async (force: boolean = false) => {
     try {
       setLoading(true);
-      setError(null);
       const result = await fetchWeatherFromApi({ force });
       
       if (result && result.data) {
-        const timeStr = formatToKST(result.lastUpdated);
-        const finalTimeLabel = `갱신 ${timeStr}`;
+        const kstTimeLabel = formatToKST(result.lastUpdated);
+        const finalLabel = `갱신 ${kstTimeLabel}`;
         
         setData(result.data);
         setSpecialReports(result.special_reports || []);
-        setLastUpdatedStr(finalTimeLabel);
+        setLastUpdatedStr(finalLabel);
 
+        // 로컬 캐시 저장
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           data: result.data,
           specialReports: result.special_reports,
-          lastUpdated: finalTimeLabel,
+          lastUpdated: finalLabel,
           timestamp: Date.now()
         }));
 
         if (force) {
           setRefreshSuccess(true);
           setTimeout(() => setRefreshSuccess(false), 2000);
-          saveWeatherSnapshot(result.data).catch(() => {});
         }
       }
     } catch (err) {
-      setError("데이터 갱신 중 오류가 발생했습니다.");
+      console.error("데이터 수집 오류:", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // 초기 로드 시 캐시 확인 및 데이터 호출
   useEffect(() => {
     const saved = localStorage.getItem(CACHE_KEY);
     if (saved) {
@@ -69,42 +92,40 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         setData(parsed.data || []);
         setSpecialReports(parsed.specialReports || []);
-        setLastUpdatedStr(parsed.lastUpdated || '');
+        setLastUpdatedStr(parsed.lastUpdated || '갱신 중...');
       } catch (e) {
-        console.error("Cache load fail");
+        console.error("캐시 파싱 오류");
       }
     }
     runCollectionModule(false);
   }, [runCollectionModule]);
-
-  // 안전한 페이지 이동 함수
-  const safeNavigate = (path: string) => {
-    if ((window as any).navigateTo) {
-      (window as any).navigateTo(path);
-    } else {
-      window.location.hash = path; // Fallback
-    }
-  };
 
   return (
     <div className="amo-container">
       <header>
         <div className="header-title-group">
           <div className="header-icon">
-            <button 
-              onClick={() => safeNavigate('/history')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}
-            >
-              <Plane size={24} fill="currentColor" />
-            </button>
+            <Plane size={24} fill="currentColor" />
           </div>
           <div className="header-info">
             <h1>전국 공항 실시간 기상</h1>
-            <span className="update-time">{lastUpdatedStr}</span>
+            <span className="update-time">
+              {lastUpdatedStr}
+            </span>
           </div>
         </div>
-        <button className="refresh-btn" onClick={() => runCollectionModule(true)} disabled={loading}>
-          {loading ? <RefreshCw size={18} className="spin" /> : refreshSuccess ? <Check size={18} /> : <RefreshCw size={18} />}
+        <button 
+          className={`refresh-btn ${loading ? 'loading' : ''}`} 
+          onClick={() => runCollectionModule(true)} 
+          disabled={loading}
+        >
+          {loading ? (
+            <RefreshCw size={18} className="spin" />
+          ) : refreshSuccess ? (
+            <Check size={18} />
+          ) : (
+            <RefreshCw size={18} />
+          )}
         </button>
       </header>
 
@@ -113,18 +134,22 @@ const App: React.FC = () => {
         <span>
           최신 기상정보는 해당 공항 클릭 확인, 특보는 
           <span 
-            onClick={() => safeNavigate('/special-reports')} 
-            style={{ color: '#2563eb', fontWeight: 'bold', cursor: 'pointer', margin: '0 4px', textDecoration: 'underline' }}
+            className="link-text"
+            onClick={() => window.location.assign('/special-reports')}
           >
             기상특보 메뉴
           </span> 
-          참조 / 갱신은 10분 마다 사용 가능
+          참조
         </span>
       </div>
 
-      <div className="animate-fade">
-        <WeatherTable weatherData={data} specialReports={specialReports} isLoading={loading && data.length === 0} />
-      </div>
+      <main className="content-area">
+        <WeatherTable 
+          weatherData={data} 
+          specialReports={specialReports} 
+          isLoading={loading && data.length === 0} 
+        />
+      </main>
     </div>
   );
 };
