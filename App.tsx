@@ -15,42 +15,30 @@ const App: React.FC = () => {
 
   /**
    * 서버에서 온 날짜 문자열을 한국 시간(KST) 포맷으로 변환합니다.
-   * 이미지 형식: 2026년 2월 5일(목) 16:00(KST)
+   * 원하는 형식: 2026-02-05 18:57
    */
-
   const formatToKST = (dateInput: any) => {
-  if (!dateInput) return "시간 정보 없음";
+    if (!dateInput) return '시간 정보 없음';
 
-  const date = new Date(dateInput); // ISO 문자열 그대로 파싱
-  if (isNaN(date.getTime())) return String(dateInput);
+    const date = new Date(dateInput); // ISO 문자열 그대로 파싱
+    if (isNaN(date.getTime())) return String(dateInput);
 
-  const formatter = new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Seoul',
-  });
+    const formatter = new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Seoul',
+    });
 
-  const parts = formatter.formatToParts(date);
-  const get = (type: string) =>
-    parts.find((p) => p.type === type)?.value ?? '';
+    const parts = formatter.formatToParts(date);
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? '';
 
-  // 원하는 형식: 2026-02-05 18:57
-  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
-};
-      
-      const parts = formatter.formatToParts(date);
-      const p: any = {};
-      parts.forEach(part => { p[part.type] = part.value; });
-      
-      // 이미지(image_c15ea0.png)와 동일한 포맷 구성
-      return `${p.year}년 ${p.month} ${p.day}(${p.weekday}) ${p.hour}:${p.minute}(KST)`;
-    } catch (e) {
-      return date.toLocaleString();
-    }
+    // 예: 2026-02-05 18:57
+    return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
   };
 
   /**
@@ -60,11 +48,11 @@ const App: React.FC = () => {
     try {
       setLoading(true);
       const result = await fetchWeatherFromApi({ force });
-      
+
       if (result && result.data) {
         const kstTimeLabel = formatToKST(result.lastUpdated);
         const finalLabel = `갱신 ${kstTimeLabel}`;
-        
+
         setData(result.data);
         setSpecialReports(result.special_reports || []);
         setLastUpdatedStr(finalLabel);
@@ -74,7 +62,7 @@ const App: React.FC = () => {
           data: result.data,
           specialReports: result.special_reports,
           lastUpdated: finalLabel,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         }));
 
         if (force) {
@@ -83,7 +71,7 @@ const App: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error("데이터 수집 오류:", err);
+      console.error('데이터 수집 오류:', err);
     } finally {
       setLoading(false);
     }
@@ -99,7 +87,7 @@ const App: React.FC = () => {
         setSpecialReports(parsed.specialReports || []);
         setLastUpdatedStr(parsed.lastUpdated || '갱신 중...');
       } catch (e) {
-        console.error("캐시 파싱 오류");
+        console.error('캐시 파싱 오류');
       }
     }
     runCollectionModule(false);
@@ -119,9 +107,9 @@ const App: React.FC = () => {
             </span>
           </div>
         </div>
-        <button 
-          className={`refresh-btn ${loading ? 'loading' : ''}`} 
-          onClick={() => runCollectionModule(true)} 
+        <button
+          className={`refresh-btn ${loading ? 'loading' : ''}`}
+          onClick={() => runCollectionModule(true)}
           disabled={loading}
         >
           {loading ? (
@@ -137,22 +125,22 @@ const App: React.FC = () => {
       <div className="info-banner">
         <Info size={18} />
         <span>
-          최신 기상정보는 해당 공항 클릭 확인, 특보는 
-          <span 
+          최신 기상정보는 해당 공항 클릭 확인, 특보는{' '}
+          <span
             className="link-text"
             onClick={() => window.location.assign('/special-reports')}
           >
             기상특보 메뉴
-          </span> 
-          참조
+          </span>
+          {' '}참조
         </span>
       </div>
 
       <main className="content-area">
-        <WeatherTable 
-          weatherData={data} 
-          specialReports={specialReports} 
-          isLoading={loading && data.length === 0} 
+        <WeatherTable
+          weatherData={data}
+          specialReports={specialReports}
+          isLoading={loading && data.length === 0}
         />
       </main>
     </div>
