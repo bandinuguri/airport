@@ -5,12 +5,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
  */
 const mapConditionToIconCode = (condition: string): string => {
   const text = condition || "";
-  if (text.includes('맑음')) return 'sunny';
-  if (text.includes('흐림') || text.includes('구름')) return 'cloudy';
-  if (text.includes('비')) return 'rain';
-  if (text.includes('눈')) return 'snow';
-  if (text.includes('안개') || text.includes('박무') || text.includes('연무')) return 'mist';
-  return 'cloudy';
+  if (text.includes("맑음")) return "sunny";
+  if (text.includes("흐림") || text.includes("구름")) return "cloudy";
+  if (text.includes("비")) return "rain";
+  if (text.includes("눈")) return "snow";
+  if (text.includes("안개") || text.includes("박무") || text.includes("연무")) return "mist";
+  return "cloudy";
 };
 
 /**
@@ -20,19 +20,19 @@ const mapForecast12h = (forecastStr: string): any[] => {
   const defaultForecast = [
     { time: "4h", iconCode: "sunny" },
     { time: "8h", iconCode: "sunny" },
-    { time: "12h", iconCode: "sunny" }
+    { time: "12h", iconCode: "sunny" },
   ];
-  
-  if (!forecastStr || forecastStr === "-" || !forecastStr.includes('>')) {
+
+  if (!forecastStr || forecastStr === "-" || !forecastStr.includes(">")) {
     return defaultForecast;
   }
 
   try {
-    const parts = forecastStr.split('>').map(p => p.trim());
+    const parts = forecastStr.split(">").map((p) => p.trim());
     return [
       { time: "4h", iconCode: mapConditionToIconCode(parts[0]) },
       { time: "8h", iconCode: mapConditionToIconCode(parts[1]) },
-      { time: "12h", iconCode: mapConditionToIconCode(parts[2]) }
+      { time: "12h", iconCode: mapConditionToIconCode(parts[2]) },
     ];
   } catch (e) {
     return defaultForecast;
@@ -44,55 +44,85 @@ const mapForecast12h = (forecastStr: string): any[] => {
  */
 export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<any> => {
   try {
-    const response = await fetch(`${BASE_URL}/api/weather${opts?.force ? '?force=true' : ''}`, {
-      cache: 'no-store'
-    });
-    
+    const response = await fetch(
+      `${BASE_URL}/api/weather${opts?.force ? "?force=true" : ""}`,
+      {
+        cache: "no-store",
+      }
+    );
+
     if (!response.ok) throw new Error("Network response error");
     const rawJson = await response.json();
 
     const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
-    const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
-    
+    const globalReports = Array.isArray(rawJson.special_reports)
+      ? rawJson.special_reports
+      : [];
+
     // 서버 응답에서 가장 신뢰할 수 있는 시간을 추출합니다.
     const serverTime =
-      rawJson.last_updated
-      || rawJson.updated_at
-      || (weatherData.length > 0 ? weatherData[0].time : new Date().toISOString());
-    
+      rawJson.last_updated ||
+      rawJson.updated_at ||
+      (weatherData.length > 0 ? weatherData[0].time : new Date().toISOString());
+
     const mappedData = weatherData.map((item: any) => {
       // 해당 공항에 대한 특보 매칭
-      const foundReport = globalReports.find((r: any) =>
-        item.name.includes(r.airport) || r.airport.includes(item.name.replace('공항', ''))
+      const foundReport = globalReports.find(
+        (r: any) =>
+          item.name.includes(r.airport) ||
+          r.airport.includes(item.name.replace("공항", ""))
       );
 
       return {
         ...item, // 기존의 모든 데이터 필드(id 등) 보존
-        airportName: (item.name || "").replace('공항', ''),
+        airportName: (item.name || "").replace("공항", ""),
         icao: item.code || "",
         current: {
           condition: item.condition || "-",
-          temperature: item.temp ? String(item.temp).replace('℃', '').trim() : "-",
-          iconCode: mapConditionToIconCode(item.condition)
+          temperature: item.temp
+            ? String(item.temp).replace("℃", "").trim()
+            : "-",
+          iconCode: mapConditionToIconCode(item.condition),
         },
         forecast12h: mapForecast12h(item.forecast_12h || ""),
-        advisories: (foundReport && foundReport.special_report !== "-") ? foundReport.special_report : (item.report !== "-" ? item.report : "없음"),
+        advisories:
+          foundReport && foundReport.special_report !== "-"
+            ? foundReport.special_report
+            : item.report !== "-"
+            ? item.report
+            : "없음",
         snowfall: item.rain || "-",
       };
     });
 
     // 지정된 ICAO 순서로 정렬
-    const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
+    const SORT_ORDER = [
+      "RKSI",
+      "RKSS",
+      "RKPC",
+      "RKPK",
+      "RKTU",
+      "RKTN",
+      "RKPU",
+      "RKJB",
+      "RKJJ",
+      "RKJY",
+      "RKNY",
+      "RKPS",
+      "RKTH",
+      "RKJK",
+      "RKNW",
+    ];
     mappedData.sort((a: any, b: any) => {
       const idxA = SORT_ORDER.indexOf(a.icao);
       const idxB = SORT_ORDER.indexOf(b.icao);
       return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
     });
 
-    return { 
-      data: mappedData, 
-      lastUpdated: serverTime, 
-      special_reports: globalReports 
+    return {
+      data: mappedData,
+      lastUpdated: serverTime,
+      special_reports: globalReports,
     };
   } catch (error) {
     console.error("Fetch Error:", error);
@@ -101,10 +131,28 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
 };
 
 /**
- * 빌드 성공 및 타 페이지 호환성을 위한 함수 정의
+ * 스냅샷/히스토리 관련 함수들은 현재 Vercel 버전에서 사용하지 않으므로
+ * 최소 구현만 유지합니다.
  */
 export const saveWeatherSnapshot = async (data: any) => ({ success: true });
-export const fetchForecastFromApi = async (icao: string) => null;
+
+/**
+ * 공항별 3일 예보 API 호출
+ * - GET /api/forecast/{icao}
+ * - Supabase 테이블 airport_forecast_3day 에서 가져온 데이터를 그대로 반환
+ */
+export const fetchForecastFromApi = async (icao: string) => {
+  try {
+    const res = await fetch(`${BASE_URL}/api/forecast/${icao}`);
+    if (!res.ok) throw new Error("3-day forecast network error");
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.error("3-day forecast API error:", e);
+    return [];
+  }
+};
+
 export const fetchSpecialReportsFromApi = async () => [];
 export const fetchSnapshots = async () => [];
 export const fetchSnapshotData = async (id: number) => null;
