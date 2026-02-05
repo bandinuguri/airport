@@ -5,16 +5,18 @@ import WeatherTable from './components/WeatherTable';
 import { fetchWeatherFromApi, saveWeatherSnapshot } from './services/apiService';
 import { AirportWeather } from './types';
 
-const CACHE_KEY = 'aviation_weather_cache_v2';
+const CACHE_KEY = 'aviation_weather_cache_v3'; // 캐시 키 업데이트
 
 interface CacheData {
   timestamp: number;
   data: AirportWeather[];
+  specialReports: any[]; // 특보 데이터 추가
   lastUpdated: string;
 }
 
 const App: React.FC = () => {
   const [data, setData] = useState<AirportWeather[]>([]);
+  const [specialReports, setSpecialReports] = useState<any[]>([]); // 특보 상태 추가
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('');
@@ -37,36 +39,36 @@ const App: React.FC = () => {
 
       const result = await fetchWeatherFromApi({ force });
       const weatherData = result.data;
+      const reports = result.special_reports || []; // 결과에서 특보 추출
 
       if (weatherData && weatherData.length > 0) {
         const updateStr = result.lastUpdated
           ? formatUpdateTimestamp(new Date(result.lastUpdated))
           : formatUpdateTimestamp();
+        
         setData(weatherData);
+        setSpecialReports(reports); // 특보 데이터 저장
         setLastUpdatedStr(updateStr);
 
         const cacheObject: CacheData = {
           timestamp: Date.now(),
           data: weatherData,
+          specialReports: reports,
           lastUpdated: updateStr
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
 
-        // Auto-save to history only when server actually refreshed (not cached)
         if (force && result.cached === false) {
           try {
             await saveWeatherSnapshot(weatherData);
-            console.log('Weather snapshot saved to history');
           } catch (err) {
             console.warn('Failed to save snapshot:', err);
           }
         }
 
-        // Show success feedback
         setRefreshSuccess(true);
         setTimeout(() => setRefreshSuccess(false), 2000);
 
-        // If server returned a warning (e.g., refresh throttled), surface it as a soft error banner
         if (result.warning) setError(result.warning);
       } else {
         throw new Error("데이터를 수집하지 못했습니다.");
@@ -80,6 +82,7 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved) as CacheData;
         if (data.length === 0) {
           setData(parsed.data);
+          setSpecialReports(parsed.specialReports || []);
           setLastUpdatedStr(parsed.lastUpdated);
         }
       }
@@ -94,12 +97,10 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved) as CacheData;
         setData(parsed.data);
+        setSpecialReports(parsed.specialReports || []);
         setLastUpdatedStr(parsed.lastUpdated);
-      } catch (e) {
-        // ignore parse error
-      }
+      } catch (e) {}
     }
-    // Always ask server for the shared latest value on load
     runCollectionModule(false);
   }, []);
 
@@ -127,20 +128,14 @@ const App: React.FC = () => {
             transition: 'background-color 0.3s'
           }}
         >
-          {loading ? (
-            <RefreshCw size={18} className="spin" />
-          ) : refreshSuccess ? (
-            <Check size={18} />
-          ) : (
-            <RefreshCw size={18} />
-          )}
+          {loading ? <RefreshCw size={18} className="spin" /> : refreshSuccess ? <Check size={18} /> : <RefreshCw size={18} />}
         </button>
       </header>
 
       <div className="info-banner">
         <Info size={18} />
         <span>
-          최신 기상정보는 해당 공항 클릭하여 확인, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>) / 갱신은 10분 마다 사용 가능
+          최신 기상정보는 해당 공항 클릭 확인, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 / 갱신은 10분 마다 사용 가능
         </span>
       </div>
 
@@ -150,7 +145,13 @@ const App: React.FC = () => {
             {error}
           </div>
         )}
-        <WeatherTable weatherData={data} isLoading={loading && data.length === 0} />
+        
+        {/* WeatherTable에 specialReports 전달 */}
+        <WeatherTable 
+          weatherData={data} 
+          specialReports={specialReports} 
+          isLoading={loading && data.length === 0} 
+        />
       </div>
 
       <div style={{ marginTop: '40px', textAlign: 'center', paddingBottom: '40px', color: '#94a3b8', fontSize: '0.75rem' }}>
