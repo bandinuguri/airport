@@ -1,4 +1,9 @@
-// 빌드 에러 방지를 위해 필요한 타입을 내부에 정의하여 내보냅니다.
+// services/apiService.ts
+
+/**
+ * [타입 정의] 
+ * 외부 types.ts와 충돌을 방지하기 위해 필요한 경우에만 참조하거나 내부 정의를 사용합니다.
+ */
 export interface ForecastItem {
   time: string;
   iconCode: string;
@@ -57,7 +62,7 @@ const mapForecast12h = (forecastStr: string): ForecastItem[] => {
 };
 
 /**
- * 메인 데이터 fetch 함수
+ * [핵심] 메인 날씨 데이터 Fetch 함수
  */
 export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<any> => {
   try {
@@ -71,7 +76,7 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
     const weatherData = Array.isArray(rawJson.data) ? rawJson.data : [];
     const globalReports = Array.isArray(rawJson.special_reports) ? rawJson.special_reports : [];
     
-    // DB의 원본 시간을 그대로 전달 (App.tsx에서 formatToKST로 처리)
+    // DB의 원본 시간을 그대로 전달 (App.tsx에서 처리)
     const rawTime = rawJson.updated_at || (weatherData.length > 0 ? weatherData[0].time : null);
 
     const mappedData: AirportWeather[] = weatherData.map((item: any) => {
@@ -93,7 +98,7 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
       };
     });
 
-    // 정렬
+    // 정렬 (ICAO 순서)
     const SORT_ORDER = ['RKSI', 'RKSS', 'RKPC', 'RKPK', 'RKTU', 'RKTN', 'RKPU', 'RKJB', 'RKJJ', 'RKJY', 'RKNY', 'RKPS', 'RKTH', 'RKJK', 'RKNW'];
     mappedData.sort((a, b) => {
       const indexA = SORT_ORDER.indexOf(a.icao);
@@ -112,7 +117,5 @@ export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<a
   }
 };
 
-// 다른 파일에서 참조할 수 있는 빈 함수들 정의 (빌드 에러 방지용)
-export const saveWeatherSnapshot = async (data: any) => ({ success: true });
-export const fetchForecastFromApi = async (icao: string) => null;
-export const fetchSpecialReportsFromApi = async () => [];
+/**
+ * [빌드
