@@ -343,60 +343,52 @@ tbody tr:hover {
     padding: 12px;
   }
 
-  header {
-    padding: 16px 20px;
-  }
-
-  /* 테이블을 다시 유연하게(Auto) 만듭니다 */
+  /* 테이블 너비 자동 조절 유지 */
   table {
     table-layout: auto !important;
   }
 
   th, td {
-    padding: 12px 4px; /* 기본 패딩 축소 */
+    padding: 12px 4px;
   }
 
-  /* 핵심 수정: 공항과 현재 사이의 간격을 없앰 */
+  /* 핵심 수정: 공항은 오른쪽 정렬, 현재는 왼쪽 정렬하여 자석처럼 붙임 */
   th:first-child, td:first-child {
-    padding-left: 12px !important;
-    padding-right: 0px !important; /* 오른쪽 벽 제거 */
-    width: 1%; /* 내용만큼만 차지하도록 최소화 */
-    white-space: nowrap;
+    text-align: right !important; /* 공항 이름을 오른쪽으로 밀기 */
+    padding-right: 15px !important; /* 아이콘과의 최소 간격 */
+    width: 25%;
   }
 
   th:nth-child(2), td:nth-child(2) {
-    padding-left: 8px !important; /* 왼쪽 벽 허물기 (아이콘 여백만 남김) */
-    padding-right: 4px !important;
-    width: 1%; /* 내용만큼만 차지하도록 최소화 */
-    white-space: nowrap;
-    text-align: center;
+    text-align: left !important; /* 날씨 아이콘을 왼쪽으로 밀기 */
+    padding-left: 0 !important;
+    width: 15%;
   }
 
-  /* 예보 컬럼이 남는 공간을 다 쓰게 함 */
+  /* 나머지 컬럼 정렬 유지 */
   th:nth-child(3), td:nth-child(3) {
+    text-align: center;
     width: auto;
-  }
-
-  /* 특보, 적설, 영상 컬럼은 글자가 안 깨질 정도로만 유지 */
-  th:nth-child(4), td:nth-child(4),
-  th:nth-child(5), td:nth-child(5),
-  th:nth-child(6), td:nth-child(6) {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
   }
 
   .weather-current span:first-child {
     font-size: 1.2rem !important;
+  }
+
+  .forecast-icons {
+    gap: 4px;
+    padding: 4px 6px;
   }
 }
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   th, td {
-    padding: 10px 2px;
+    padding: 8px 2px;
+    font-size: 0.75rem;
   }
-  
+
   th:first-child, td:first-child {
-    padding-left: 8px !important;
+    padding-right: 10px !important;
   }
 }
