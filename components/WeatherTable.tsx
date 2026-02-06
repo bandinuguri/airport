@@ -18,9 +18,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
   const [forecast3Day, setForecast3Day] = useState<Record<string, any[]>>({});
   const [loading3Day, setLoading3Day] = useState(false);
 
-  // 특보 텍스트 포맷팅
-  // - 대설 관련: 대설예 → 대설예비, 대설주 → 대설주의, 대설경 → 대설경보
-  // - 그 외: 건조, 한파 등은 그대로 표시
   const formatAdvisoryLabel = (raw: string | null | undefined) => {
     if (!raw || raw === '없음' || raw === '-') return '';
     const parts = raw.split(',').map((p) => p.trim()).filter(Boolean);
@@ -116,24 +113,25 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
   return (
     <div className="w-full">
       <div className="table-container">
-        <table>
+        <table style={{ tableLayout: 'fixed', width: '100%' }}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left' }}>공항</th>
-              <th>현재</th>
-              <th>
+              {/* 컬럼별 너비를 강제로 지정하여 간격 조절 */}
+              <th style={{ width: '22%', textAlign: 'left', paddingLeft: '12px' }}>공항</th>
+              <th style={{ width: '18%' }}>현재</th>
+              <th style={{ width: '30%' }}>
                 <button
                   className="forecast-toggle"
-                  onClick={handleForecastModeToggle}
+                  onClick={(e) => { e.stopPropagation(); handleForecastModeToggle(); }}
                   disabled={loading3Day}
                   title="예보 모드 전환"
                 >
-                  ▼ {forecastMode === '12h' ? '12h 예보' : '3일 예보'}
+                  ▼ {forecastMode === '12h' ? '12h' : '3일'}
                 </button>
               </th>
-              <th>특보</th>
-              <th>적설</th>
-              <th>영상</th>
+              <th style={{ width: '15%' }}>특보</th>
+              <th style={{ width: '10%' }}>적설</th>
+              <th style={{ width: '10%' }}>영상</th>
             </tr>
           </thead>
           <tbody>
@@ -150,43 +148,38 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                   onClick={() => handleRowClick(item.icao)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td>
-                    <div className="airport-name">{item.airportName}</div>
+                  <td style={{ paddingLeft: '12px' }}>
+                    <div className="airport-name" style={{ fontSize: '0.9rem' }}>{item.airportName}</div>
                     <span className="airport-code">{item.icao}</span>
                   </td>
                   <td>
-                    <div className="weather-current">
-                      <span style={{ fontSize: '1.5rem' }}>{getWeatherIcon(item.current.iconCode)}</span>
-                      <span className="temp">{item.current.temperature}</span>
+                    <div className="weather-current" style={{ gap: '2px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{getWeatherIcon(item.current.iconCode)}</span>
+                      <span className="temp" style={{ fontSize: '0.85rem' }}>{item.current.temperature}</span>
                     </div>
                   </td>
                   <td>
                     {forecastMode === '12h' ? (
-                      <div className="forecast-icons">
+                      <div className="forecast-icons" style={{ gap: '4px', padding: '4px 6px' }}>
                         {item.forecast12h.map((f, idx) => (
                           <div key={idx} className="forecast-item">
-                            <span className="forecast-time">{f.time}</span>
-                            <span style={{ fontSize: '1.1rem' }}>{getWeatherIcon(f.iconCode)}</span>
+                            <span className="forecast-time" style={{ fontSize: '0.55rem' }}>{f.time}</span>
+                            <span style={{ fontSize: '1rem' }}>{getWeatherIcon(f.iconCode)}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="forecast-icons">
+                      <div className="forecast-icons" style={{ gap: '4px', padding: '4px 6px' }}>
                         {loading3Day ? (
-                          <Loader2 className="animate-spin" size={16} style={{ margin: '0 auto' }} />
+                          <Loader2 className="animate-spin" size={14} style={{ margin: '0 auto' }} />
                         ) : forecast3Day[item.icao] && forecast3Day[item.icao].length > 0 ? (
                           forecast3Day[item.icao].slice(0, 3).map((day, idx) => {
                             const dowMatch = day.date.match(/\((.*?)\)/);
                             const dow = dowMatch ? dowMatch[1] : '';
                             return (
                               <div key={idx} className="forecast-item">
-                                <span
-                                  className="forecast-time"
-                                  style={{ fontSize: '0.85rem', fontWeight: 400 }}
-                                >
-                                  {dow}
-                                </span>
-                                <span style={{ fontSize: '1.1rem' }}>
+                                <span className="forecast-time" style={{ fontSize: '0.6rem' }}>{dow}</span>
+                                <span style={{ fontSize: '1rem' }}>
                                   {day.forecasts && day.forecasts.length > 0
                                     ? getWeatherIcon(mapConditionToIcon(day.forecasts[0].condition))
                                     : '☁️'}
@@ -200,21 +193,19 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                       </div>
                     )}
                   </td>
-                  <td style={{ textAlign: 'center', fontSize: '0.9rem' }}>
+                  <td style={{ textAlign: 'center', padding: '4px 2px' }}>
                     {(() => {
                       const formatted = formatAdvisoryLabel(item.advisories as string);
-                      if (!formatted) {
-                        return <span style={{ color: '#e2e8f0' }}>-</span>;
-                      }
+                      if (!formatted) return <span style={{ color: '#e2e8f0' }}>-</span>;
                       const isSnow = formatted.includes('대설');
                       return (
-                        <span className={`advisory-badge ${isSnow ? 'advisory-snow' : 'advisory-plain'}`}>
+                        <span className={`advisory-badge ${isSnow ? 'advisory-snow' : 'advisory-plain'}`} style={{ fontSize: '0.65rem', padding: '2px 5px' }}>
                           {formatted}
                         </span>
                       );
                     })()}
                   </td>
-                  <td style={{ textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
+                  <td style={{ textAlign: 'center', fontSize: '0.8rem', color: '#64748b' }}>
                     {item.snowfall || '-'}
                   </td>
                   <td>
@@ -232,8 +223,7 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                           }
                         }}
                       >
-                        <Video size={18} />
-                        <span>영상</span>
+                        <Video size={16} />
                       </a>
                     </div>
                   </td>
@@ -247,27 +237,18 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
       {selectedAirport && (
         <div className="modal-overlay" onClick={() => setSelectedAirport(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setSelectedAirport(null)}>
-              &times;
-            </button>
-            <h2 className="modal-title">
-              {selectedAirport.name} ({selectedAirport.icao}) 3일 상세 예보
-            </h2>
-
+            <button className="close-btn" onClick={() => setSelectedAirport(null)}>&times;</button>
+            <h2 className="modal-title">{selectedAirport.name} ({selectedAirport.icao}) 3일 상세 예보</h2>
             {loadingForecast ? (
               <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                 <Loader2 className="animate-spin mx-auto mb-4" size={32} />
                 <p>예보 정보를 불러오는 중입니다...</p>
               </div>
-            ) : forecast.length > 0 ? (
+            ) : (
               <>
                 <div className="tabs">
                   {forecast.map((day, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveTab(idx)}
-                      className={`tab-btn ${activeTab === idx ? 'active' : ''}`}
-                    >
+                    <button key={idx} onClick={() => setActiveTab(idx)} className={`tab-btn ${activeTab === idx ? 'active' : ''}`}>
                       {day.date}
                     </button>
                   ))}
@@ -276,13 +257,7 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                   <table style={{ border: 'none' }}>
                     <thead style={{ position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
                       <tr>
-                        <th>시간</th>
-                        <th>날씨</th>
-                        <th>기온</th>
-                        <th>풍향</th>
-                        <th>풍속</th>
-                        <th>운고</th>
-                        <th>시정</th>
+                        <th>시간</th><th>날씨</th><th>기온</th><th>풍향</th><th>풍속</th><th>운고</th><th>시정</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -290,9 +265,7 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                         <tr key={i}>
                           <td style={{ fontWeight: 600 }}>{f.time}</td>
                           <td style={{ textAlign: 'center' }}>{f.condition}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: '#2563eb' }}>
-                            {f.temp}
-                          </td>
+                          <td style={{ textAlign: 'center', fontWeight: 700, color: '#2563eb' }}>{f.temp}</td>
                           <td style={{ textAlign: 'center' }}>{f.wind_dir}</td>
                           <td style={{ textAlign: 'center' }}>{f.wind_speed}</td>
                           <td style={{ textAlign: 'center' }}>{f.cloud || '-'}</td>
@@ -303,10 +276,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                   </table>
                 </div>
               </>
-            ) : (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                예보 정보를 가져오지 못했습니다.
-              </div>
             )}
           </div>
         </div>
