@@ -50,7 +50,8 @@ const App: React.FC = () => {
       const result = await fetchWeatherFromApi({ force });
 
       if (result && result.data) {
-        const kstTimeLabel = formatToKST(result.lastUpdated);
+        const serverTime = result.lastUpdated ?? result.last_updated ?? null;
+        const kstTimeLabel = serverTime ? formatToKST(serverTime) : formatToKST(new Date().toISOString());
         const finalLabel = `갱신 ${kstTimeLabel}`;
 
         setData(result.data);
