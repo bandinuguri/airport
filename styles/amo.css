@@ -849,14 +849,22 @@ tbody tr:hover {
   td:first-child,
   th:first-child {
     padding-left: 10px;
-    padding-right: 4px;
+    padding-right: 2px;
   }
   td:nth-child(2),
   th:nth-child(2) {
-    padding-left: 2px;
+    padding-left: 0px;
     padding-right: 4px;
   }
 
+/* 적설·영상 컬럼 간격 확대 (좁음 해소) */
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 
   /* Airport name column */
 
@@ -1078,15 +1086,7 @@ tbody tr:hover {
 
   th:nth-child(4),
 
-  td:nth-child(4),
-
-  th:nth-child(5),
-
-  td:nth-child(5),
-
-  th:nth-child(6),
-
-  td:nth-child(6) {
+  td:nth-child(4){
 
     padding-left: 3px;
 
@@ -1094,7 +1094,22 @@ tbody tr:hover {
 
   }
 
-
+ /* 공항–현재 간격 유지, 적설·영상 간격 확대 (480px) */
+  td:first-child,
+  th:first-child {
+    padding-right: 2px;
+  }
+  td:nth-child(2),
+  th:nth-child(2) {
+    padding-left: 0;
+  }
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 
   .airport-name {
 
