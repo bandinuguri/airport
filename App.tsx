@@ -125,14 +125,7 @@ const App: React.FC = () => {
       <div className="info-banner">
         <Info size={18} />
         <span>
-          최신 기상정보는 해당 공항 클릭 확인, 특보는{' '}
-          <span
-            className="link-text"
-            onClick={() => window.location.assign('/special-reports')}
-          >
-            기상특보 메뉴
-          </span>
-          {' '}참조
+        최신 기상정보는 해당 공항 클릭하여 확인, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>) / 갱신은 10분 마다 사용 가능
         </span>
       </div>
 
