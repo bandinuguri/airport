@@ -430,10 +430,9 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
 
                   </td>
 
+                  
                   <td style={{ textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
-
-                    {item.snowfall || '-'}
-
+                    {String(item.snowfall || '-').replace(/\s*mm\s*$/gi, '').trim() || '-'}
                   </td>
 
                   <td>
