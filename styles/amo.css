@@ -353,43 +353,44 @@ tbody tr:hover {
     font-size: 1.2rem;
   }
 
+  /* 테이블 레이아웃 고정: 너비 제어를 위해 필수 */
+  table {
+    table-layout: fixed;
+  }
+
   th, td {
-    padding: 12px 4px;
+    padding: 12px 2px;
+    font-size: 0.85rem;
   }
 
-  /* 컬럼별 간격 최적화 */
-  /* 1. 공항 열: 왼쪽 여백 확보, 오른쪽 여백 제거하여 '현재'와 밀착 */
+  /* 1. 공항 컬럼: 왼쪽 여백만 남기고 너비 축소 */
   th:first-child, td:first-child {
-    padding-left: 12px;
-    padding-right: 0;
+    width: 22% !important;
+    padding-left: 10px !important;
+    padding-right: 0 !important;
     text-align: left;
-    width: 22%;
   }
 
-  /* 2. 현재 열: 왼쪽 여백 제거하여 '공항'과 밀착 */
+  /* 2. 현재 컬럼: 여백을 모두 없애고 공항 옆으로 밀착 */
   th:nth-child(2), td:nth-child(2) {
-    padding-left: 0;
-    padding-right: 4px;
-    width: 15%;
+    width: 16% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
   }
 
-  /* 3. 예보 열: 중앙 정렬 유지 */
+  /* 3. 예보 컬럼: 유연한 너비 사용 */
   th:nth-child(3), td:nth-child(3) {
-    padding-left: 4px;
-    padding-right: 4px;
+    width: auto !important;
   }
 
-  /* 4. 특보 열: 텍스트가 잘리지 않도록 최소 여백 */
-  th:nth-child(4), td:nth-child(4) {
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-
-  /* 5, 6. 적설/영상 열: 좁음 방지를 위한 여백 */
+  /* 4, 5, 6. 나머지 컬럼 촘촘하게 배치 */
+  th:nth-child(4), td:nth-child(4),
   th:nth-child(5), td:nth-child(5),
   th:nth-child(6), td:nth-child(6) {
-    padding-left: 8px;
-    padding-right: 8px;
+    width: 11% !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
   }
 
   .weather-current span:first-child {
@@ -404,14 +405,18 @@ tbody tr:hover {
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
+  .amo-container {
+    padding: 8px;
+  }
+
   th, td {
-    padding: 10px 2px;
-    font-size: 0.8rem;
+    padding: 10px 1px;
+    font-size: 0.75rem;
   }
 
   th:first-child, td:first-child {
-    padding-left: 8px;
-    width: 20%;
+    width: 20% !important;
+    padding-left: 8px !important;
   }
 
   .airport-name {
@@ -419,6 +424,6 @@ tbody tr:hover {
   }
 
   .weather-current .temp {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
