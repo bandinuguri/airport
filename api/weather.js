@@ -33,6 +33,10 @@ export default async function handler(req, res) {
 
     const data = Array.isArray(row.data) ? row.data : [];
     const lastUpdated = row.updated_at ? new Date(row.updated_at).toISOString() : null;
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+
     return res.status(200).json({
       data,
       special_reports: row.special_reports || [],
