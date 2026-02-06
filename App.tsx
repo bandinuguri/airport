@@ -254,7 +254,7 @@ const App: React.FC = () => {
 
         <span>
 
-        최신 정보는 해당 공항 클릭, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>) / 갱신주기 : 30분
+        최신정보 : 아래 공항 클릭(또는  (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>)) / 특보 : <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 / 갱신주기 : 30분
 
         </span>
 
