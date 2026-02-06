@@ -44,10 +44,11 @@ const mapForecast12h = (forecastStr: string): any[] => {
  */
 export const fetchWeatherFromApi = async (opts?: { force?: boolean }): Promise<any> => {
   try {
+    const q = opts?.force ? "?force=true" : `?t=${Date.now()}`;
     const response = await fetch(
-      `${BASE_URL}/api/weather${opts?.force ? "?force=true" : ""}`,
+      `${BASE_URL}/api/weather${q}`,
       {
-        cache: "no-store",
+       cache: "no-store",
       }
     );
 
