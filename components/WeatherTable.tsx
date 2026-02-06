@@ -304,7 +304,11 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
 
                   <td>
 
-                    <div className="airport-name">{item.airportName}</div>
+                    <div className="airport-name">
+
+                      {item.airportName === "포항경주" ? "포항" : item.airportName}
+
+                    </div>
 
                     <span className="airport-code">{item.icao}</span>
 
@@ -430,9 +434,10 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
 
                   </td>
 
-                  
                   <td style={{ textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
+
                     {String(item.snowfall || '-').replace(/\s*mm\s*$/gi, '').trim() || '-'}
+
                   </td>
 
                   <td>
