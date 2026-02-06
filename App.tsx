@@ -106,7 +106,7 @@ const App: React.FC = () => {
 
         const kstTimeLabel = serverTime ? formatToKST(serverTime) : formatToKST(new Date().toISOString());
 
-        const finalLabel = `갱신(30분간격) ${kstTimeLabel}`;
+        const finalLabel = `갱신: ${kstTimeLabel}`;
 
 
 
@@ -206,7 +206,7 @@ const App: React.FC = () => {
 
           <div className="header-info">
 
-            <h1>전국 공항 실시간 기상</h1>
+            <h1>공항 기상 정보</h1>
 
             <span className="update-time">
 
@@ -254,7 +254,7 @@ const App: React.FC = () => {
 
         <span>
 
-        최신정보 : 아래 공항 클릭(<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨누리</a>, <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">특보</a>)
+        최신정보 > 공항명 클릭( <a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨누리</a>, <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">특보</a> )
 
         </span>
 
