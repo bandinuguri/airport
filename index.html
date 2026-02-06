@@ -8,5 +8,77 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+
+    <script>
+      const GITHUB_CONFIG = {
+        token: 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, // 발급받은 github_pat_... 토큰 입력
+        owner: 'bandinuguri',
+        repo: 'airport',
+        workflow: 'scrape.yml'
+      };
+
+      // 1. 시간 체크 후 필요시 액션 실행
+      async function checkAndTrigger() {
+        // 화면에 렌더링될 때까지 잠시 대기 (React 로딩 시간 고려)
+        setTimeout(async () => {
+          const timeSpan = document.querySelector('.header-info span');
+          if (!timeSpan) {
+            console.log("시간 요소를 찾는 중...");
+            checkAndTrigger(); // 요소를 못 찾으면 재시도
+            return;
+          }
+
+          const match = timeSpan.innerText.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
+          if (!match) return;
+
+          const lastTime = new Date(match[0]);
+          const now = new Date();
+          const diffMin = (now - lastTime) / (1000 * 60);
+
+          console.log(`마지막 갱신으로부터 ${Math.floor(diffMin)}분 경과`);
+
+          if (diffMin >= 10) {
+            console.log("10분 경과로 자동 갱신을 요청합니다.");
+            runAction(true);
+          }
+        }, 2000); // 2초 후 실행 (React 화면이 그려진 뒤)
+      }
+
+      // 2. GitHub Action 실행 요청 함수
+      async function runAction(isAuto = false) {
+        try {
+          const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/actions/workflows/${GITHUB_CONFIG.workflow}/dispatches`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github+json',
+              },
+              body: JSON.stringify({ ref: 'main' }),
+            }
+          );
+
+          if (response.ok) {
+            console.log("GitHub Action 트리거 성공");
+            if (!isAuto) alert("새로운 데이터를 요청했습니다. 약 1분 후 새로고침 해주세요.");
+          }
+        } catch (err) {
+          console.error("오류 발생:", err);
+        }
+      }
+
+      // 3. 페이지 로드 시 및 리로드 버튼 클릭 시 이벤트 연결
+      window.addEventListener('load', () => {
+        checkAndTrigger();
+
+        // 리로드 버튼 클릭 이벤트 (버튼이 나중에 생성되므로 body에 위임)
+        document.body.addEventListener('click', (e) => {
+          if (e.target.closest('.refresh-btn')) {
+            runAction(false);
+          }
+        });
+      });
+    </script>
   </body>
 </html>
