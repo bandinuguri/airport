@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [specialReports, setSpecialReports] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [lastUpdatedStr, setLastUpdatedStr] = ('갱신 중...');
+  const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('갱신 중...');
   const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
   /**
@@ -86,7 +86,7 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         setData(parsed.data || []);
         setSpecialReports(parsed.specialReports || []);
-        setLastUpdatedStr(parsed.lastUpdated || '갱신 중...');
+        setLastUpdatedStr('갱신 중...');
       } catch (e) {
         console.error('캐시 파싱 오류');
       }
