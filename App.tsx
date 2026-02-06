@@ -162,7 +162,7 @@ const App: React.FC = () => {
       <div className="info-banner">
         <Info size={18} />
         <span>
-        최신정보: 공항명 클릭( <a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨누리</a>, <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">특보</a> )
+        사이트 링크 : <a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨누리</a>, <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">특보</a>
         </span>
       </div>
 
