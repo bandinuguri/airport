@@ -283,4 +283,147 @@ tbody tr:hover {
   position: absolute;
   top: 24px;
   right: 24px;
-  background: #f1f5
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .amo-container {
+    padding: 12px;
+  }
+
+  header {
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .header-info h1 {
+    font-size: 1.2rem;
+  }
+
+  /* 테이블 레이아웃 고정: 너비 제어를 위해 필수 */
+  table {
+    table-layout: fixed;
+  }
+
+  th, td {
+    padding: 12px 2px;
+    font-size: 0.85rem;
+  }
+
+  /* 1. 공항 컬럼: 왼쪽 여백만 남기고 너비 축소 */
+  th:first-child, td:first-child {
+    width: 22% !important;
+    padding-left: 10px !important;
+    padding-right: 0 !important;
+    text-align: left;
+  }
+
+  /* 2. 현재 컬럼: 여백을 모두 없애고 공항 옆으로 밀착 */
+  th:nth-child(2), td:nth-child(2) {
+    width: 16% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
+  }
+
+  /* 3. 예보 컬럼: 유연한 너비 사용 */
+  th:nth-child(3), td:nth-child(3) {
+    width: auto !important;
+  }
+
+  /* 4, 5, 6. 나머지 컬럼 촘촘하게 배치 */
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5),
+  th:nth-child(6), td:nth-child(6) {
+    width: 11% !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  .weather-current span:first-child {
+    font-size: 1.2rem !important;
+  }
+
+  .forecast-icons {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .amo-container {
+    padding: 8px;
+  }
+
+  th, td {
+    padding: 10px 1px;
+    font-size: 0.75rem;
+  }
+
+  th:first-child, td:first-child {
+    width: 20% !important;
+    padding-left: 8px !important;
+  }
+
+  .airport-name {
+    font-size: 0.85rem;
+  }
+
+  .weather-current .temp {
+    font-size: 0.75rem;
+  }
+}
