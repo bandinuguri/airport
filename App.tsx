@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [specialReports, setSpecialReports] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [lastUpdatedStr, setLastUpdatedStr] = useState<string>('갱신 중...');
+  const [lastUpdatedStr, setLastUpdatedStr] = ('갱신 중...');
   const [refreshSuccess, setRefreshSuccess] = useState<boolean>(false);
 
   /**
