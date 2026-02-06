@@ -845,17 +845,17 @@ tbody tr:hover {
   }
 
 
-
-  /* Reduce left padding on first column (airport names) */
-
+ /* 공항–현재 컬럼 간격 축소: 공항 열 오른쪽·현재 열 왼쪽 패딩 최소화 */
   td:first-child,
-
   th:first-child {
-
-    padding-left: 12px;
-
+    padding-left: 10px;
+    padding-right: 4px;
   }
-
+  td:nth-child(2),
+  th:nth-child(2) {
+    padding-left: 2px;
+    padding-right: 4px;
+  }
 
 
   /* Airport name column */
