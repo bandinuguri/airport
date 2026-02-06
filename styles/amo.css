@@ -347,37 +347,35 @@ tbody tr:hover {
     padding: 16px 20px;
   }
 
-  /* 테이블을 다시 유연하게(Auto) 만듭니다 */
   table {
     table-layout: auto !important;
   }
 
   th, td {
-    padding: 12px 4px; /* 기본 패딩 축소 */
+    padding: 12px 4px;
   }
 
-  /* 핵심 수정: 공항과 현재 사이의 간격을 없앰 */
+  /* 공항 컬럼: 오른쪽 여백을 6px 추가하여 간격을 넓힘 */
   th:first-child, td:first-child {
     padding-left: 12px !important;
-    padding-right: 0px !important; /* 오른쪽 벽 제거 */
-    width: 1%; /* 내용만큼만 차지하도록 최소화 */
+    padding-right: 6px !important; 
+    width: 1%;
     white-space: nowrap;
   }
 
+  /* 현재 컬럼: 왼쪽 여백을 10px로 늘려 공항 컬럼과 떨어지게 함 */
   th:nth-child(2), td:nth-child(2) {
-    padding-left: 8px !important; /* 왼쪽 벽 허물기 (아이콘 여백만 남김) */
+    padding-left: 10px !important; 
     padding-right: 4px !important;
-    width: 1%; /* 내용만큼만 차지하도록 최소화 */
+    width: 1%;
     white-space: nowrap;
     text-align: center;
   }
 
-  /* 예보 컬럼이 남는 공간을 다 쓰게 함 */
   th:nth-child(3), td:nth-child(3) {
     width: auto;
   }
 
-  /* 특보, 적설, 영상 컬럼은 글자가 안 깨질 정도로만 유지 */
   th:nth-child(4), td:nth-child(4),
   th:nth-child(5), td:nth-child(5),
   th:nth-child(6), td:nth-child(6) {
