@@ -25,7 +25,7 @@ body {
   padding: 20px;
 }
 
-/* Header & Banner */
+/* Header Styles */
 header {
   background: var(--header-bg);
   padding: 24px 32px;
@@ -37,13 +37,56 @@ header {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.header-title-group { display: flex; align-items: center; gap: 16px; }
-.header-icon { background: var(--primary); color: white; padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-.header-info h1 { font-size: 1.5rem; margin: 0; color: var(--text); font-weight: 700; }
-.header-info span { font-size: 0.85rem; color: #64748b; display: block; margin-top: 4px; }
-.refresh-btn { background: #f1f5f9; border: none; color: #64748b; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-.refresh-btn:hover { background: #e2e8f0; color: var(--primary); }
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
+.header-icon {
+  background: var(--primary);
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-info h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.header-info span {
+  font-size: 0.85rem;
+  color: #64748b;
+  display: block;
+  margin-top: 4px;
+}
+
+.refresh-btn {
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #e2e8f0;
+  color: var(--primary);
+}
+
+/* Info Banner */
 .info-banner {
   background: var(--info-bg);
   border-radius: 16px;
@@ -57,7 +100,18 @@ header {
   border: 1px solid rgba(37, 99, 235, 0.1);
 }
 
-/* Table Styles (PC 기본) */
+.info-banner a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.info-link {
+  font-weight: 700 !important;
+  font-size: 1.05em;
+}
+
+/* Table Styles */
 .table-container {
   background: var(--card-bg);
   border-radius: 20px;
@@ -85,10 +139,37 @@ td {
   vertical-align: middle;
 }
 
-.airport-name { font-weight: 700; color: var(--text); }
-.airport-code { font-size: 0.75rem; color: #94a3b8; display: block; }
-.weather-current { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.weather-current .temp { font-weight: 700; font-size: 0.95rem; }
+tbody tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.airport-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.airport-code {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.weather-current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.weather-current .temp {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
 
 .forecast-icons {
   display: flex;
@@ -99,55 +180,220 @@ td {
   border-radius: 12px;
 }
 
-/* --- 모바일 반응형 핵심 수정 (이 부분이 중요합니다) --- */
+.forecast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.forecast-time {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+/* Advisory badge (특보) */
+.advisory-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.advisory-snow {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.advisory-plain {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* Forecast Toggle Button */
+.forecast-toggle {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.forecast-toggle:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.forecast-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #94a3b8;
+}
+
+.video-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.video-link:hover {
+  color: var(--primary);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  padding: 32px;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 900px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  .amo-container { padding: 10px; }
-  
-  /* 테이블을 콘텐츠 크기에 맞춤 */
-  table {
-    table-layout: auto !important;
+  .amo-container {
+    padding: 12px;
+  }
+
+  header {
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .header-info h1 {
+    font-size: 1.2rem;
   }
 
   th, td {
-    padding: 12px 2px !important; /* 기본 여백 대폭 축소 */
-    font-size: 0.85rem;
+    padding: 12px 4px;
   }
 
-  /* 1. 공항 컬럼: 왼쪽 정렬, 너비를 최소화(1%)하여 현재 컬럼을 끌어당김 */
+  /* 컬럼별 간격 최적화 */
+  /* 1. 공항 열: 왼쪽 여백 확보, 오른쪽 여백 제거하여 '현재'와 밀착 */
   th:first-child, td:first-child {
-    text-align: left !important;
-    padding-left: 10px !important;
-    padding-right: 0px !important;
-    width: 1% !important; 
-    white-space: nowrap;
+    padding-left: 12px;
+    padding-right: 0;
+    text-align: left;
+    width: 22%;
   }
 
-  /* 2. 현재 컬럼: 왼쪽 정렬, 왼쪽 여백 제거하여 공항 옆에 밀착 */
+  /* 2. 현재 열: 왼쪽 여백 제거하여 '공항'과 밀착 */
   th:nth-child(2), td:nth-child(2) {
-    text-align: left !important;
-    padding-left: 4px !important; /* 공항 이름과의 간격만 살짝 둠 */
-    padding-right: 0px !important;
-    width: 1% !important;
-    white-space: nowrap;
+    padding-left: 0;
+    padding-right: 4px;
+    width: 15%;
   }
 
-  /* 현재 아이콘과 온도가 세로로 잘 정렬되게 보정 */
-  .weather-current {
-    align-items: flex-start !important;
-  }
-
-  /* 3. 예보 컬럼: 남는 모든 공간을 이 열이 흡수하도록 설정 */
+  /* 3. 예보 열: 중앙 정렬 유지 */
   th:nth-child(3), td:nth-child(3) {
-    width: auto !important;
-    padding-left: 10px !important;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
-  /* 4, 5, 6. 나머지 컬럼들은 내용에 맞춰 좁게 유지 */
-  th:nth-child(4), td:nth-child(4),
+  /* 4. 특보 열: 텍스트가 잘리지 않도록 최소 여백 */
+  th:nth-child(4), td:nth-child(4) {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  /* 5, 6. 적설/영상 열: 좁음 방지를 위한 여백 */
   th:nth-child(5), td:nth-child(5),
   th:nth-child(6), td:nth-child(6) {
-    width: 10% !important;
-    text-align: center;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .weather-current span:first-child {
+    font-size: 1.2rem !important;
   }
 
   .forecast-icons {
@@ -156,14 +402,23 @@ td {
   }
 }
 
-/* 초소형 화면 보정 */
+/* Extra small mobile devices */
 @media (max-width: 480px) {
-  th:first-child, td:first-child { padding-left: 6px !important; }
-  .airport-name { font-size: 0.8rem; }
-  .weather-current .temp { font-size: 0.75rem; }
-}
+  th, td {
+    padding: 10px 2px;
+    font-size: 0.8rem;
+  }
 
-/* 나머지 애니메이션 및 모달 스타일 유지 */
-.advisory-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
-.advisory-snow { background: #fee2e2; color: #b91c1c; }
-.advisory-plain { background: #eff6ff; color: #1d4ed8; }
+  th:first-child, td:first-child {
+    padding-left: 8px;
+    width: 20%;
+  }
+
+  .airport-name {
+    font-size: 0.85rem;
+  }
+
+  .weather-current .temp {
+    font-size: 0.8rem;
+  }
+}
