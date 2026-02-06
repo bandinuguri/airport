@@ -86,7 +86,8 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         setData(parsed.data || []);
         setSpecialReports(parsed.specialReports || []);
-        setLastUpdatedStr('갱신 중...');
+        // 캐시 데이터가 있을 경우 화면에 먼저 표시 (갱신 중... 대신 캐시된 시간 노출로 깜빡임 방지)
+        if (parsed.lastUpdated) setLastUpdatedStr(parsed.lastUpdated);
       } catch (e) {
         console.error('캐시 파싱 오류');
       }
@@ -125,15 +126,15 @@ const App: React.FC = () => {
 
       <div className="info-banner">
         <Info size={18} />
-        <span>
-        최신 기상정보는 해당 공항 클릭하여 확인, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>) / 갱신은 10분 마다 사용 가능
+        <span className="info-text">
+          최신 기상정보는 해당 공항 클릭하여 확인, 특보는 <a href="https://www.weather.go.kr/w/special-report/overall.do" target="_blank" rel="noreferrer" className="info-link">기상특보</a> 클릭 (<a href="https://amo.kma.go.kr/" target="_blank" rel="noreferrer" className="info-link">항공기상청</a>, <a href="https://www.weather.go.kr/" target="_blank" rel="noreferrer" className="info-link">날씨 누리</a>) / 갱신은 10분 마다 사용 가능
         </span>
       </div>
 
       <main className="content-area">
+        {/* 컨테이너의 좌우 패딩을 줄이는 구조는 amo.css에서 처리되므로, 컴포넌트는 연결에 집중합니다 */}
         <WeatherTable
           weatherData={data}
-          specialReports={specialReports}
           isLoading={loading && data.length === 0}
         />
       </main>
