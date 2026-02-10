@@ -44,31 +44,6 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
 
   // - 그 외: 건조, 한파 등은 그대로 표시
 
-  const formatAdvisoryLabel = (raw: string | null | undefined) => {
-
-    if (!raw || raw === '없음' || raw === '-') return '';
-
-    const parts = raw.split(',').map((p) => p.trim()).filter(Boolean);
-
-    const mapped = parts.map((code) => {
-
-      if (code.startsWith('대설')) {
-
-        if (code.includes('예')) return '대설예비';
-
-        if (code.includes('주')) return '대설주의';
-
-        if (code.includes('경')) return '대설경보';
-
-      }
-
-      return code;
-
-    });
-
-    return mapped.join(', ');
-
-  };
 
 
 
@@ -406,38 +381,56 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
 
                   </td>
 
-                  <td style={{ textAlign: 'center', fontSize: '0.9rem' }}>
-
+                  <td style={{ textAlign: 'center', padding: '6px 4px' }}>
                     {(() => {
-
-                      const formatted = formatAdvisoryLabel(item.advisories as string);
-
-                      if (!formatted) {
-
+                      if (!item.advisories || item.advisories === '없음' || item.advisories === '-') {
                         return <span style={{ color: '#e2e8f0' }}>-</span>;
-
                       }
 
-                      const isSnow = formatted.includes('대설');
+                      const parts = String(item.advisories).split(',').map((p) => p.trim()).filter(Boolean);
+                      const snowReports: string[] = [];
+                      const generalReports: string[] = [];
+
+                      parts.forEach(part => {
+                        if (part.includes('대설')) {
+                          let label = part;
+                          if (part.includes('예')) label = '대설예비';
+                          else if (part.includes('주')) label = '대설주의';
+                          else if (part.includes('경')) label = '대설경보';
+                          snowReports.push(label);
+                        } else {
+                          generalReports.push(part);
+                        }
+                      });
+
+                      // 일반 특보는 상위 2개만 표시 (3개 이상 시)
+                      const displayGeneral = generalReports.length >= 3 ? generalReports.slice(0, 2) : generalReports;
 
                       return (
-
-                        <span className={`advisory-badge ${isSnow ? 'advisory-snow' : 'advisory-plain'}`}>
-
-                          {formatted}
-
-                        </span>
-
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                          {displayGeneral.length > 0 && (
+                            <div className="advisory-general-text">
+                              {displayGeneral.join('·')}
+                            </div>
+                          )}
+                          {snowReports.map((s, i) => (
+                            <span key={i} className="advisory-badge advisory-snow-emphasized">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
                       );
-
                     })()}
-
                   </td>
 
                   <td style={{ textAlign: 'center', fontSize: '0.9rem', color: '#64748b' }}>
-
-                    {String(item.snowfall || '-').replace(/\s*mm\s*$/gi, '').trim() || '-'}
-
+                    {(() => {
+                      const raw = String(item.snowfall || '-').replace(/\s*[a-zA-Z]+\s*$/gi, '').trim();
+                      if (raw === '-' || isNaN(parseFloat(raw))) return '-';
+                      // mm 단위를 cm로 변환 (수치/10)
+                      const cmValue = (parseFloat(raw) / 10).toFixed(2);
+                      return parseFloat(cmValue) === 0 ? '0' : cmValue;
+                    })()}
                   </td>
 
                   <td>

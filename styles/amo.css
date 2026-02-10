@@ -194,24 +194,40 @@ tbody tr:hover {
 
 /* Advisory badge (특보) */
 .advisory-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-weight: 600;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
-.advisory-snow {
-  background: #fee2e2;
-  color: #b91c1c;
+.advisory-plain {
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
-.advisory-plain {
-  background: #eff6ff;
-  color: #1d4ed8;
+.advisory-snow {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+/* 대설 강조 스타일 (첨부2 스타일) */
+.advisory-snow-emphasized {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  font-size: 0.85rem;
+  padding: 3px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 일반 특보 연한 스타일 */
+.advisory-general-text {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-bottom: 2px;
 }
 
 /* Forecast Toggle Button */
@@ -325,8 +341,13 @@ tbody tr:hover {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
@@ -351,34 +372,41 @@ tbody tr:hover {
     table-layout: auto !important;
   }
 
-  th, td {
+  th,
+  td {
     padding: 12px 4px;
   }
 
   /* 공항 컬럼: 오른쪽 여백을 6px 추가하여 간격을 넓힘 */
-  th:first-child, td:first-child {
+  th:first-child,
+  td:first-child {
     padding-left: 12px !important;
-    padding-right: 6px !important; 
+    padding-right: 6px !important;
     width: 1%;
     white-space: nowrap;
   }
 
   /* 현재 컬럼: 왼쪽 여백을 10px로 늘려 공항 컬럼과 떨어지게 함 */
-  th:nth-child(2), td:nth-child(2) {
-    padding-left: 10px !important; 
+  th:nth-child(2),
+  td:nth-child(2) {
+    padding-left: 10px !important;
     padding-right: 4px !important;
     width: 1%;
     white-space: nowrap;
     text-align: center;
   }
 
-  th:nth-child(3), td:nth-child(3) {
+  th:nth-child(3),
+  td:nth-child(3) {
     width: auto;
   }
 
-  th:nth-child(4), td:nth-child(4),
-  th:nth-child(5), td:nth-child(5),
-  th:nth-child(6), td:nth-child(6) {
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
     padding-left: 4px !important;
     padding-right: 4px !important;
   }
@@ -390,11 +418,14 @@ tbody tr:hover {
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
-  th, td {
+
+  th,
+  td {
     padding: 10px 2px;
   }
-  
-  th:first-child, td:first-child {
+
+  th:first-child,
+  td:first-child {
     padding-left: 8px !important;
   }
 }
