@@ -22,9 +22,10 @@ body {
 .amo-container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 16px; /* Optimized for mobile */
+  padding: 20px;
 }
 
+/* Header Styles */
 header {
   background: var(--header-bg);
   padding: 24px 32px;
@@ -36,181 +37,427 @@ header {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.weather-list {
+.header-title-group {
   display: flex;
-  flex-direction: column;
-  gap: 10px; /* Row spacing */
-}
-
-.weather-card {
-  background: var(--card-bg);
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  padding: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.2s;
-}
-
-.weather-card:active { transform: scale(0.98); }
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
-.airport-info {
+.header-icon {
+  background: var(--primary);
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-left: 6px;
+  align-items: center;
+  justify-content: center;
 }
 
-.airport-name {
-  font-size: 17px;
-  font-weight: 600;
+.header-info h1 {
+  font-size: 1.5rem;
+  margin: 0;
   color: var(--text);
+  font-weight: 700;
 }
 
-.current-weather {
+.header-info span {
+  font-size: 0.85rem;
+  color: #64748b;
+  display: block;
+  margin-top: 4px;
+}
+
+.refresh-btn {
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
-.current-icon { font-size: 1.5rem; }
-
-.current-temp {
-  font-size: 20px;
-  font-weight: 700;
+.refresh-btn:hover {
+  background: #e2e8f0;
   color: var(--primary);
 }
 
-.forecast-container {
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 6px 8px;
+/* Info Banner */
+.info-banner {
+  background: var(--info-bg);
+  border-radius: 16px;
+  padding: 16px 24px;
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: #1e40af;
+  font-size: 0.9rem;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+.info-banner a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.info-link {
+  font-weight: 700 !important;
+  font-size: 1.05em;
+}
+
+/* Table Styles */
+.table-container {
+  background: var(--card-bg);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 16px 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.airport-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.airport-code {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.weather-current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.weather-current .temp {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.forecast-icons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-radius: 12px;
 }
 
 .forecast-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
+  gap: 2px;
+}
+
+.forecast-icon-display {
+  font-size: 1.1rem;
 }
 
 .forecast-time {
-  font-size: 13px;
+  font-size: 0.65rem;
   color: #94a3b8;
 }
 
-.forecast-icon-display { font-size: 1.1rem; }
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px dashed var(--border);
-  padding-top: 10px;
-  margin-top: 4px;
+/* Advisory badge (특보) */
+.advisory-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
-.footer-stats {
-  display: flex;
-  gap: 16px;
-  font-size: 13px;
+.advisory-plain {
+  background-color: #f1f5f9;
   color: #64748b;
 }
 
-.advisory-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-weight: 600;
+.advisory-snow {
+  background-color: #eff6ff;
+  color: #2563eb;
 }
 
+/* 대설 강조 스타일 (첨부2 스타일) */
 .advisory-snow-emphasized {
   background-color: #fee2e2;
   color: #ef4444;
   border: 1px solid #fecaca;
+  font-size: 0.85rem;
+  padding: 3px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* 일반 특보 연한 스타일 */
 .advisory-general-text {
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+
+/* Forecast Toggle Button */
+.forecast-toggle {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.forecast-toggle:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.forecast-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #94a3b8;
 }
 
 .video-link {
   display: flex;
+  flex-direction: column;
   align-items: center;
   color: #94a3b8;
+  font-size: 0.75rem;
   text-decoration: none;
 }
 
-.video-link:hover { color: var(--primary); }
-
-.list-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 0 4px;
-}
-
-.forecast-toggle {
-  background: #f1f5f9;
-  border: none;
+.video-link:hover {
   color: var(--primary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 8px;
 }
 
-@media (min-width: 768px) {
-  .weather-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-    gap: 16px;
-  }
-}
-
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   z-index: 1000;
-  left: 0; top: 0; width: 100%; height: 100%;
-  background-color: rgba(15, 23, 42, 0.6);
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(8px);
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white; padding: 24px; border-radius: 24px;
-  width: 95%; max-width: 800px; max-height: 90vh;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  position: relative; overflow-y: auto;
+  background: white;
+  padding: 32px;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 900px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
-.modal-table-container {
-  overflow-x: auto; border-radius: 16px; border: 1px solid var(--border);
+.close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
 }
 
-.modal-table {
-  width: 100%; border-collapse: collapse; font-size: 0.9rem;
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 24px;
 }
 
-.modal-table th {
-  background: #f8fafc; padding: 12px; color: #64748b; border-bottom: 1px solid var(--border);
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
-.modal-table td {
-  padding: 12px; border-bottom: 1px solid var(--border);
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .amo-container {
+    padding: 12px;
+  }
+
+  header {
+    padding: 16px 20px;
+  }
+
+  table {
+    table-layout: auto !important;
+  }
+
+  th,
+  td {
+    padding: 12px 4px;
+  }
+
+  /* 공항 컬럼: 오른쪽 여백을 6px 추가하여 간격을 넓힘 */
+  th:first-child,
+  td:first-child {
+    padding-left: 12px !important;
+    padding-right: 6px !important;
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  /* 현재 컬럼: 왼쪽 여백을 4px로 줄임 */
+  th:nth-child(2),
+  td:nth-child(2) {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: auto;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  .forecast-icons {
+    padding: 6px 4px !important;
+    gap: 6px !important;
+  }
+
+  .weather-current span:first-child {
+    font-size: 1.2rem !important;
+  }
+
+  .forecast-toggle {
+    font-size: 0.75rem !important;
+    padding: 2px 4px !important;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+
+  th,
+  td {
+    padding: 10px 1px;
+    font-size: 0.8rem;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 4px !important;
+  }
+
+  .forecast-icons {
+    padding: 4px 2px !important;
+    gap: 4px !important;
+  }
+
+  .forecast-item span:last-child {
+    font-size: 0.9rem !important;
+  }
+
+  .forecast-icon-display {
+    font-size: 0.95rem !important;
+  }
+
+  .video-link span {
+    display: none;
+  }
 }
