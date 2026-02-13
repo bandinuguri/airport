@@ -22,31 +22,31 @@ body {
 .amo-container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px; /* 모바일 최적화 여백 */
 }
 
 /* Header Styles */
 header {
   background: var(--header-bg);
-  padding: 24px 32px;
+  padding: 20px;
   border-radius: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .header-title-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .header-icon {
   background: var(--primary);
   color: white;
-  padding: 12px;
+  padding: 10px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -54,224 +54,177 @@ header {
 }
 
 .header-info h1 {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   margin: 0;
-  color: var(--text);
   font-weight: 700;
 }
 
 .header-info span {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #64748b;
   display: block;
-  margin-top: 4px;
 }
 
-.refresh-btn {
-  background: #f1f5f9;
-  border: none;
-  color: #64748b;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  cursor: pointer;
+/* Weather List & Cards */
+.weather-list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  flex-direction: column;
+  gap: 10px; /* 행 간격 (핵심 요구사항) */
 }
 
-.refresh-btn:hover {
-  background: #e2e8f0;
-  color: var(--primary);
-}
-
-/* Info Banner */
-.info-banner {
-  background: var(--info-bg);
-  border-radius: 16px;
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  color: #1e40af;
-  font-size: 0.9rem;
-  border: 1px solid rgba(37, 99, 235, 0.1);
-}
-
-.info-banner a {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.info-link {
-  font-weight: 700 !important;
-  font-size: 1.05em;
-}
-
-/* Table Styles */
-.table-container {
+.weather-card {
   background: var(--card-bg);
-  border-radius: 20px;
+  border-radius: 14px;
   border: 1px solid var(--border);
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  padding: 16px 24px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #94a3b8;
-  border-bottom: 1px solid var(--border);
-}
-
-td {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-tbody tr {
+  padding: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.1s, box-shadow 0.2s;
 }
 
-tbody tr:hover {
-  background: #f8fafc;
+.weather-card:active {
+  transform: scale(0.98);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.airport-info {
+  display: flex;
+  flex-direction: column;
+  padding-left: 6px; /* 왼쪽 붙음 방지 */
 }
 
 .airport-name {
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 600;
   color: var(--text);
 }
 
-.airport-code {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  display: block;
-}
-
-.weather-current {
+.current-weather {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.weather-current .temp {
+.current-icon {
+  font-size: 1.5rem;
+}
+
+.current-temp {
+  font-size: 20px;
   font-weight: 700;
-  font-size: 0.95rem;
+  color: var(--primary);
 }
 
-.forecast-icons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+/* Forecast Box (Requirement 4) */
+.forecast-container {
   background: #f8fafc;
-  padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .forecast-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  flex: 1;
+}
+
+.forecast-time {
+  font-size: 13px;
+  color: #94a3b8;
 }
 
 .forecast-icon-display {
   font-size: 1.1rem;
 }
 
-.forecast-time {
-  font-size: 0.65rem;
-  color: #94a3b8;
+/* Footer Stats */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
 }
 
-/* Advisory badge (특보) */
+.footer-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.stat-label {
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Advisory Badges */
 .advisory-badge {
   display: inline-block;
-  padding: 2px 8px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.8rem;
-  white-space: nowrap;
 }
 
-.advisory-plain {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.advisory-snow {
-  background-color: #eff6ff;
-  color: #2563eb;
-}
-
-/* 대설 강조 스타일 (첨부2 스타일) */
 .advisory-snow-emphasized {
   background-color: #fee2e2;
   color: #ef4444;
   border: 1px solid #fecaca;
-  font-size: 0.85rem;
-  padding: 3px 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 일반 특보 연한 스타일 */
 .advisory-general-text {
   color: #94a3b8;
-  font-size: 0.7rem;
   font-weight: 400;
-  margin-bottom: 2px;
 }
 
-/* Forecast Toggle Button */
+/* Control Bar */
+.list-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.forecast-mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
 .forecast-toggle {
-  background: transparent;
+  background: #f1f5f9;
   border: none;
   color: var(--primary);
-  font-size: 0.85rem;
+  font-size: 13px;
   font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
-.forecast-toggle:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: var(--primary);
-}
-
-.forecast-toggle:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  color: #94a3b8;
-}
-
-.video-link {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #94a3b8;
-  font-size: 0.75rem;
-  text-decoration: none;
-}
-
-.video-link:hover {
-  color: var(--primary);
+/* Responsive Grid for Desktop */
+@media (min-width: 768px) {
+  .weather-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 16px;
+  }
 }
 
 /* Modal Styles */
@@ -282,181 +235,47 @@ tbody tr:hover {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(15, 23, 42, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
   background: white;
-  padding: 32px;
+  padding: 24px;
   border-radius: 24px;
-  width: 90%;
-  max-width: 900px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  width: 95%;
+  max-width: 800px;
+  max-height: 90vh;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   position: relative;
+  overflow-y: auto;
 }
 
-.close-btn {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  background: #f1f5f9;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-}
-
-.modal-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 24px;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 8px 16px;
-  border-radius: 10px;
+.modal-table-container {
+  overflow-x: auto;
+  border-radius: 16px;
   border: 1px solid var(--border);
-  background: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
+}
+
+.modal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.modal-table th {
+  background: #f8fafc;
+  padding: 12px;
+  font-size: 13px;
   color: #64748b;
+  border-bottom: 1px solid var(--border);
 }
 
-.tab-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-.animate-fade {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  .amo-container {
-    padding: 12px;
-  }
-
-  header {
-    padding: 16px 20px;
-  }
-
-  table {
-    table-layout: auto !important;
-  }
-
-  th,
-  td {
-    padding: 12px 4px;
-  }
-
-  /* 공항 컬럼: 오른쪽 여백을 6px 추가하여 간격을 넓힘 */
-  th:first-child,
-  td:first-child {
-    padding-left: 12px !important;
-    padding-right: 6px !important;
-    width: 1%;
-    white-space: nowrap;
-  }
-
-  /* 현재 컬럼: 왼쪽 여백을 4px로 줄임 */
-  th:nth-child(2),
-  td:nth-child(2) {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
-    width: 1%;
-    white-space: nowrap;
-    text-align: center;
-  }
-
-  th:nth-child(3),
-  td:nth-child(3) {
-    width: auto;
-  }
-
-  th:nth-child(4),
-  td:nth-child(4),
-  th:nth-child(5),
-  td:nth-child(5),
-  th:nth-child(6),
-  td:nth-child(6) {
-    padding-left: 2px !important;
-    padding-right: 2px !important;
-  }
-
-  .forecast-icons {
-    padding: 6px 4px !important;
-    gap: 6px !important;
-  }
-
-  .weather-current span:first-child {
-    font-size: 1.2rem !important;
-  }
-
-  .forecast-toggle {
-    font-size: 0.75rem !important;
-    padding: 2px 4px !important;
-  }
-}
-
-/* Extra small mobile devices */
-@media (max-width: 480px) {
-  th,
-  td {
-    padding: 10px 1px;
-    font-size: 0.8rem;
-  }
-
-  th:first-child,
-  td:first-child {
-    padding-left: 4px !important;
-  }
-
-  .forecast-icons {
-    padding: 4px 2px !important;
-    gap: 4px !important;
-  }
-
-  .forecast-item span:last-child {
-    font-size: 0.9rem !important;
-  }
-
-  .forecast-icon-display {
-    font-size: 0.95rem !important;
-  }
-
-  .video-link span {
-    display: none;
-  }
+.modal-table td {
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
 }
