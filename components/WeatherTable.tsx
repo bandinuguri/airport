@@ -302,83 +302,48 @@ const WeatherTable: React.FC<WeatherTableProps> = ({ weatherData, isLoading }) =
                   </td>
 
                   <td>
-
                     {forecastMode === '12h' ? (
-
-                      <div className="forecast-icons">
-
-                        {item.forecast12h.map((f, idx) => (
-
-                          <div key={idx} className="forecast-item">
-
-                            <span className="forecast-time">{f.time}</span>
-
-                            <span className="forecast-icon-display">{getWeatherIcon(f.iconCode)}</span>
-
-                          </div>
-
-                        ))}
-
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <div className="forecast-icons">
+                          {item.forecast12h.map((f, idx) => (
+                            <div key={idx} className="forecast-item">
+                              <span className="forecast-time">{f.time}</span>
+                              <span className="forecast-icon-display">{getWeatherIcon(f.iconCode)}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-
                     ) : (
-
-                      <div className="forecast-icons">
-
-                        {loading3Day ? (
-
-                          <Loader2 className="animate-spin" size={16} style={{ margin: '0 auto' }} />
-
-                        ) : forecast3Day[item.icao] && forecast3Day[item.icao].length > 0 ? (
-
-                          forecast3Day[item.icao].slice(0, 3).map((day, idx) => {
-
-                            const dowMatch = day.date.match(/\((.*?)\)/);
-
-                            const dow = dowMatch ? dowMatch[1] : '';
-
-                            return (
-
-                              <div key={idx} className="forecast-item">
-
-                                <span
-
-                                  className="forecast-time"
-
-                                  style={{ fontSize: '0.85rem', fontWeight: 400 }}
-
-                                >
-
-                                  {dow}
-
-                                </span>
-
-                                <span className="forecast-icon-display">
-
-                                  {day.forecasts && day.forecasts.length > 0
-
-                                    ? getWeatherIcon(mapConditionToIcon(day.forecasts[0].condition))
-
-                                    : '☁️'}
-
-                                </span>
-
-                              </div>
-
-                            );
-
-                          })
-
-                        ) : (
-
-                          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>-</span>
-
-                        )}
-
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <div className="forecast-icons">
+                          {loading3Day ? (
+                            <Loader2 className="animate-spin" size={16} style={{ margin: '0 auto' }} />
+                          ) : forecast3Day[item.icao] && forecast3Day[item.icao].length > 0 ? (
+                            forecast3Day[item.icao].slice(0, 3).map((day, idx) => {
+                              const dowMatch = day.date.match(/\((.*?)\)/);
+                              const dow = dowMatch ? dowMatch[1] : '';
+                              return (
+                                <div key={idx} className="forecast-item">
+                                  <span
+                                    className="forecast-time"
+                                    style={{ fontSize: '0.85rem', fontWeight: 400 }}
+                                  >
+                                    {dow}
+                                  </span>
+                                  <span className="forecast-icon-display">
+                                    {day.forecasts && day.forecasts.length > 0
+                                      ? getWeatherIcon(mapConditionToIcon(day.forecasts[0].condition))
+                                      : '☁️'}
+                                  </span>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>-</span>
+                          )}
+                        </div>
                       </div>
-
                     )}
-
                   </td>
 
                   <td style={{ textAlign: 'center', padding: '6px 4px' }}>
