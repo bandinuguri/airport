@@ -187,6 +187,10 @@ tbody tr:hover {
   gap: 2px;
 }
 
+.forecast-icon-display {
+  font-size: 1.1rem;
+}
+
 .forecast-time {
   font-size: 0.65rem;
   color: #94a3b8;
@@ -386,10 +390,10 @@ tbody tr:hover {
     white-space: nowrap;
   }
 
-  /* 현재 컬럼: 왼쪽 여백을 10px로 늘려 공항 컬럼과 떨어지게 함 */
+  /* 현재 컬럼: 왼쪽 여백을 4px로 줄임 */
   th:nth-child(2),
   td:nth-child(2) {
-    padding-left: 10px !important;
+    padding-left: 4px !important;
     padding-right: 4px !important;
     width: 1%;
     white-space: nowrap;
@@ -407,25 +411,52 @@ tbody tr:hover {
   td:nth-child(5),
   th:nth-child(6),
   td:nth-child(6) {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  .forecast-icons {
+    padding: 6px 4px !important;
+    gap: 6px !important;
   }
 
   .weather-current span:first-child {
     font-size: 1.2rem !important;
   }
+
+  .forecast-toggle {
+    font-size: 0.75rem !important;
+    padding: 2px 4px !important;
+  }
 }
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
-
   th,
   td {
-    padding: 10px 2px;
+    padding: 10px 1px;
+    font-size: 0.8rem;
   }
 
   th:first-child,
   td:first-child {
-    padding-left: 8px !important;
+    padding-left: 4px !important;
+  }
+
+  .forecast-icons {
+    padding: 4px 2px !important;
+    gap: 4px !important;
+  }
+
+  .forecast-item span:last-child {
+    font-size: 0.9rem !important;
+  }
+
+  .forecast-icon-display {
+    font-size: 0.95rem !important;
+  }
+
+  .video-link span {
+    display: none;
   }
 }
