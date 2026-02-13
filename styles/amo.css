@@ -134,9 +134,16 @@ th {
 }
 
 td {
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+}
+
+/* 1. 공항 컬럼 왼쪽 여백 확보 */
+th:first-child,
+td:first-child {
+  padding-left: 28px !important;
+  text-align: left;
 }
 
 tbody tr {
@@ -172,12 +179,13 @@ tbody tr:hover {
 }
 
 .forecast-icons {
-  display: flex;
+  display: inline-flex;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   background: #f8fafc;
-  padding: 8px 16px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  min-width: 150px;
 }
 
 .forecast-item {
