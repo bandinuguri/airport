@@ -134,15 +134,15 @@ th {
 }
 
 td {
-  padding: 16px 12px;
+  padding: 16px 20px; /* 컬럼 간 간격 확보 */
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
-/* 1. 공항 컬럼 왼쪽 여백 확보 */
+/* 1. 공항 컬럼 왼쪽 여백 추가 확보 */
 th:first-child,
 td:first-child {
-  padding-left: 28px !important;
+  padding-left: 32px !important;
   text-align: left;
 }
 
@@ -178,14 +178,15 @@ tbody tr:hover {
   font-size: 0.95rem;
 }
 
+/* 회색 예보 박스 최소화 */
 .forecast-icons {
   display: inline-flex;
   justify-content: center;
-  gap: 16px;
+  gap: 8px;           /* 내부 간격 최적화 */
   background: #f8fafc;
-  padding: 8px 14px;
-  border-radius: 10px;
-  min-width: 150px;
+  padding: 4px 10px;   /* 음영 영역 최소화 */
+  border-radius: 8px;
+  min-width: auto;     /* 콘텐츠에 맞게 조절 */
 }
 
 .forecast-item {
@@ -224,7 +225,6 @@ tbody tr:hover {
   color: #2563eb;
 }
 
-/* 대설 강조 스타일 (첨부2 스타일) */
 .advisory-snow-emphasized {
   background-color: #fee2e2;
   color: #ef4444;
@@ -234,7 +234,6 @@ tbody tr:hover {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 일반 특보 연한 스타일 */
 .advisory-general-text {
   color: #94a3b8;
   font-size: 0.7rem;
@@ -242,7 +241,6 @@ tbody tr:hover {
   margin-bottom: 2px;
 }
 
-/* Forecast Toggle Button */
 .forecast-toggle {
   background: transparent;
   border: none;
@@ -353,119 +351,29 @@ tbody tr:hover {
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-}
+.spin { animation: spin 1s linear infinite; }
+.animate-fade { animation: fadeIn 0.4s ease-out forwards; }
 
-.animate-fade {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-/* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  .amo-container {
-    padding: 12px;
-  }
-
-  header {
-    padding: 16px 20px;
-  }
-
-  table {
-    table-layout: auto !important;
-  }
-
-  th,
-  td {
-    padding: 12px 4px;
-  }
-
-  /* 공항 컬럼: 오른쪽 여백을 6px 추가하여 간격을 넓힘 */
-  th:first-child,
-  td:first-child {
+  .amo-container { padding: 12px; }
+  header { padding: 16px 20px; }
+  table { table-layout: auto !important; }
+  th, td { padding: 12px 4px; }
+  th:first-child, td:first-child {
     padding-left: 12px !important;
     padding-right: 6px !important;
     width: 1%;
     white-space: nowrap;
   }
-
-  /* 현재 컬럼: 왼쪽 여백을 4px로 줄임 */
-  th:nth-child(2),
-  td:nth-child(2) {
+  th:nth-child(2), td:nth-child(2) {
     padding-left: 4px !important;
     padding-right: 4px !important;
     width: 1%;
     white-space: nowrap;
     text-align: center;
-  }
-
-  th:nth-child(3),
-  td:nth-child(3) {
-    width: auto;
-  }
-
-  th:nth-child(4),
-  td:nth-child(4),
-  th:nth-child(5),
-  td:nth-child(5),
-  th:nth-child(6),
-  td:nth-child(6) {
-    padding-left: 2px !important;
-    padding-right: 2px !important;
-  }
-
-  .forecast-icons {
-    padding: 6px 4px !important;
-    gap: 6px !important;
-  }
-
-  .weather-current span:first-child {
-    font-size: 1.2rem !important;
-  }
-
-  .forecast-toggle {
-    font-size: 0.75rem !important;
-    padding: 2px 4px !important;
-  }
-}
-
-/* Extra small mobile devices */
-@media (max-width: 480px) {
-
-  th,
-  td {
-    padding: 10px 1px;
-    font-size: 0.8rem;
-  }
-
-  th:first-child,
-  td:first-child {
-    padding-left: 4px !important;
-  }
-
-  .forecast-icons {
-    padding: 4px 2px !important;
-    gap: 4px !important;
-  }
-
-  .forecast-item span:last-child {
-    font-size: 0.9rem !important;
-  }
-
-  .forecast-icon-display {
-    font-size: 0.95rem !important;
-  }
-
-  .video-link span {
-    display: none;
   }
 }
